@@ -60,9 +60,10 @@ export async function query<T>(pkValue: string, opts: QueryOptions = {}): Promis
     const res = await ddbDoc.send(new QueryCommand({ ...input, ExclusiveStartKey: lastKey as never }));
     for (const it of res.Items ?? []) items.push(stripMeta<T>(it));
     lastKey = res.LastEvaluatedKey as Record<string, unknown> | undefined;
-  } while (lastKey && !opts.limit);
+    // limit 指定時も、1MB ページ分割で limit 未満になる場合は満たすまで継続
+  } while (lastKey && (!opts.limit || items.length < opts.limit));
 
-  return items;
+  return opts.limit ? items.slice(0, opts.limit) : items;
 }
 
 export async function updateAttributes(

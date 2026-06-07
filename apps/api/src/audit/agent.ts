@@ -142,13 +142,14 @@ function determineSummaryResult(
     return 'WEAK_EVIDENCE';
   }
 
+  const reason = (s.noEvidenceReason ?? '').trim();
   switch (s.evidencePresence) {
     case 'CONFIDENTIAL':
-      return s.noEvidenceReason.trim() ? 'CONFIDENTIAL_NOT_ATTACHED' : 'NEED_REVIEW';
+      return reason ? 'CONFIDENTIAL_NOT_ATTACHED' : 'NEED_REVIEW';
     case 'PREPARING':
       return 'PREPARING';
     default:
-      return s.noEvidenceReason.trim() ? 'NEED_REVIEW' : 'NO_EVIDENCE';
+      return reason ? 'NEED_REVIEW' : 'NO_EVIDENCE';
   }
 }
 
@@ -164,7 +165,7 @@ function buildSummaryReason(
   else parts.push('添付された証跡資料はありません。');
   if (unreadable > 0) parts.push(`うち ${unreadable} 件は読み取れません。`);
   if (inconsistent > 0) parts.push(`うち ${inconsistent} 件はタイプと形式が一致しない可能性があります。`);
-  if (evidenceCount === 0 && s.noEvidenceReason.trim())
+  if (evidenceCount === 0 && (s.noEvidenceReason ?? '').trim())
     parts.push('証跡なし理由が記録されています。');
   if (llmReason) parts.push(llmReason);
   return parts.join(' ');

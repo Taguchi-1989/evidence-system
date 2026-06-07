@@ -94,9 +94,10 @@ evidenceRouter.post('/submissions/:id/evidence/confirm', requireAuth, async (c) 
   const ev = await getEvidence(s.submissionId, input.evidenceId);
   if (!ev || ev.deletedAt) throw notFound('証跡が見つかりません');
 
+  const now = nowIso(); // DB とレスポンスで同一時刻を使う
   await updateEvidence(s.submissionId, ev.evidenceId, {
     storageStatus: 'uploaded',
-    uploadedAt: nowIso(),
+    uploadedAt: now,
     checksum: input.checksum ?? null,
   });
 
@@ -104,7 +105,7 @@ evidenceRouter.post('/submissions/:id/evidence/confirm', requireAuth, async (c) 
   if (!s.hasEvidence || s.evidencePresence !== 'AVAILABLE') {
     s.evidencePresence = 'AVAILABLE';
     s.hasEvidence = true;
-    s.updatedAt = nowIso();
+    s.updatedAt = now;
     await saveSubmission(s);
   }
 
@@ -114,7 +115,7 @@ evidenceRouter.post('/submissions/:id/evidence/confirm', requireAuth, async (c) 
     targetType: 'evidence',
     targetId: ev.evidenceId,
   });
-  return c.json({ ...ev, storageStatus: 'uploaded', uploadedAt: nowIso() });
+  return c.json({ ...ev, storageStatus: 'uploaded', uploadedAt: now });
 });
 
 /** 証跡一覧 */

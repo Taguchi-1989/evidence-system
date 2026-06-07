@@ -41,7 +41,7 @@ export function validateStrict(s: Submission, policy: Policy): Problem[] {
     problems.push({ path: 'contributionLevelSelf', message: '貢献度を選択してください' });
 
   if (policy.evidenceRequired && !s.hasEvidence) {
-    const hasReason = s.noEvidenceReason?.trim().length > 0;
+    const hasReason = (s.noEvidenceReason ?? '').trim().length > 0;
     const reasonAllowed =
       policy.allowNoEvidenceReason && EVIDENCE_PRESENCE_WITHOUT_FILE.includes(s.evidencePresence);
     if (!(reasonAllowed && hasReason)) {

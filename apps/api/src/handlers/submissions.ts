@@ -49,9 +49,8 @@ submissionsRouter.get('/submissions', requireAuth, async (c) => {
   } else if (scope === 'department') {
     const depts =
       user.role === 'manager'
-        ? user.managedDepartmentIds.length
-          ? user.managedDepartmentIds
-          : [user.departmentId]
+        ? // 自部署 + 配下部署（RBAC の managesDepartment と一貫させる）
+          [...new Set([user.departmentId, ...user.managedDepartmentIds])]
         : [c.req.query('departmentId') ?? user.departmentId];
     const lists = await Promise.all(depts.map((d) => listByDepartment(fiscalYear, d, status)));
     items = dedupeById(lists.flat());

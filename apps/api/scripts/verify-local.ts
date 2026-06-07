@@ -125,6 +125,11 @@ async function main(): Promise<void> {
   const file = await req('GET', pathOf(dl.data.url));
   assert(file.status === 200 && file.text === csv, 'ダウンロード内容が一致する');
 
+  // 8b) 改竄トークンは拒否される（HMAC 署名検証）
+  const tampered = pathOf(dl.data.url).replace(/token=([^&]+)/, 'token=$1x');
+  const bad = await req('GET', tampered);
+  assert(bad.status === 403, '改竄トークンは 403 で拒否される');
+
   // 9) 提出
   const submit = await req('POST', `/submissions/${sid}/submit`, { token });
   assert(submit.ok && submit.data.status === 'submitted', '提出できる（MVPはブロックしない）');

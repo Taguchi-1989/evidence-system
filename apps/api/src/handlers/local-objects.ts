@@ -8,6 +8,9 @@ import { putObject, getObjectBuffer, verifyToken } from '../storage/local-driver
 
 export const localObjectsRouter = new Hono<AppEnv>();
 
+// 注: :enc は presignUpload が encodeURIComponent したキー。S3キーは `original.<ext>` に
+// 正規化され `%` を含まないため、decodeURIComponent の二重適用は実害なし（鍵を復元する目的）。
+
 /** アップロード（presignUpload が指す先） */
 localObjectsRouter.put('/_local-objects/:enc', async (c) => {
   const key = decodeURIComponent(c.req.param('enc'));
