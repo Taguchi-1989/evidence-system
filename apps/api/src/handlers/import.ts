@@ -32,7 +32,10 @@ importRouter.post('/admin/import/presign', requireAuth, requireRole('office', 'a
 
 const ImportSchema = z.object({
   fiscalYear: z.string().min(4),
-  s3Key: z.string().min(1),
+  // presign が発行したキーのみ許可（任意キー読取を防止）
+  s3Key: z.string().regex(/^imports\/imp-[A-Za-z0-9-]+\.(xlsx|csv)$/, {
+    message: 's3Key は取込用 presign で発行されたものを指定してください',
+  }),
   dryRun: z.boolean().optional().default(true),
 });
 

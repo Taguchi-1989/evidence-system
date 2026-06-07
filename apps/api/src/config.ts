@@ -105,8 +105,12 @@ export const config = {
       .split(',')
       .map((s) => s.trim())
       .filter(Boolean),
-    /** APIキー認証時に付与するロール（既定: 事務局=全社read+export） */
-    agentApiRole: env('AGENT_API_ROLE', 'office'),
+    /**
+     * APIキー認証時に付与するロール。
+     * 既定 'auditor'＝read系のみ（セキュアデフォルト）。
+     * export/監査実行/取込/承認などの write/特権操作は明示的に 'office' / 'admin' を設定。
+     */
+    agentApiRole: env('AGENT_API_ROLE', 'auditor'),
   },
 } as const;
 

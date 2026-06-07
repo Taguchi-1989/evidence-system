@@ -16,7 +16,9 @@
 
 ### 1) 外部Agent / システム連携（APIキー）★推奨（M2M）
 `.env` の `AGENT_API_KEYS`（カンマ区切り）に登録したキーをそのまま Bearer に使います。
-一致するとサービスID（既定ロール `AGENT_API_ROLE=office`＝全社read＋export）で認証されます。
+一致するとサービスIDで認証されます。付与ロールは `AGENT_API_ROLE`（**既定 `auditor`＝read系のみ**の
+セキュアデフォルト）。export/監査実行/取込/承認まで許可するなら `office`、全権は `admin`。
+キーは `timingSafeEqual` で照合します。
 
 ```bash
 curl -H "Authorization: Bearer $AGENT_API_KEY" \

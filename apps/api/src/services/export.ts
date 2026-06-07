@@ -80,7 +80,9 @@ export async function buildExportDocument(fiscalYear: string): Promise<ExportDoc
 }
 
 function csvEscape(v: unknown): string {
-  const s = v == null ? '' : String(v);
+  let s = v == null ? '' : String(v);
+  // CSV 数式インジェクション対策：=+-@ 等で始まるセルは先頭に ' を付けて無害化
+  if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
   return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 

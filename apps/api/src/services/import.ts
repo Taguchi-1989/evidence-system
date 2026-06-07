@@ -7,12 +7,14 @@ import ExcelJS from 'exceljs';
 import {
   EVIDENCE_PRESENCE_LABELS,
   EVIDENCE_PRESENCES,
+  validateForSubmit,
   type EvidencePresence,
   type ImpactLevel,
   type Submission,
 } from '@evidence/shared';
 import { saveSubmission } from '../repositories/submissions.js';
 import { listDepartments } from '../repositories/departments.js';
+import { getEffectivePolicy } from './policy.js';
 import { getObjectBytes, getObjectText } from '../storage/objects.js';
 import { id, nowIso } from '../lib/util.js';
 
@@ -213,7 +215,10 @@ export async function importSubmissions(opts: {
     throw new Error('対応形式は xlsx / csv です');
   }
 
-  const departments = await listDepartments(opts.fiscalYear);
+  const [departments, eff] = await Promise.all([
+    listDepartments(opts.fiscalYear),
+    getEffectivePolicy(opts.fiscalYear),
+  ]);
   const deptByName = new Map(departments.map((d) => [d.name, d.departmentId]));
   const deptIds = new Set(departments.map((d) => d.departmentId));
 
@@ -229,6 +234,12 @@ export async function importSubmissions(opts: {
     });
     if (error || !submission) {
       results.push({ row: rowNo, ok: false, message: error });
+      continue;
+    }
+    // 運用モード連動の提出バリデーション（Strict は不完全行をブロック＝通常フローと整合）
+    const check = validateForSubmit(submission, eff.policy);
+    if (check.blocked) {
+      results.push({ row: rowNo, ok: false, message: check.problems.map((p) => p.message).join(' / ') });
       continue;
     }
     if (!opts.dryRun) await saveSubmission(submission);

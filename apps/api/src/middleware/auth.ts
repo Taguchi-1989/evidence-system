@@ -1,4 +1,5 @@
 /** 認証ミドルウェアと RBAC ガード。 */
+import { timingSafeEqual } from 'node:crypto';
 import type { MiddlewareHandler } from 'hono';
 import { RoleEnum, type AuthUser, type Role } from '@evidence/shared';
 import type { AppEnv } from '../types.js';
@@ -6,9 +7,18 @@ import { config } from '../config.js';
 import { getAuthProvider, extractBearer } from '../auth/index.js';
 import { forbidden, unauthorized } from '../lib/http.js';
 
+/** タイミング攻撃に耐える鍵照合（長さ不一致は false） */
+function keyMatches(candidate: string, keys: string[]): boolean {
+  const cand = Buffer.from(candidate);
+  return keys.some((k) => {
+    const buf = Buffer.from(k);
+    return buf.length === cand.length && timingSafeEqual(buf, cand);
+  });
+}
+
 /** 外部Agent向け：Bearer が AGENT_API_KEYS に一致すればサービスIDで認証 */
 function serviceUserForKey(token: string): AuthUser | null {
-  if (!config.integration.agentApiKeys.includes(token)) return null;
+  if (!keyMatches(token, config.integration.agentApiKeys)) return null;
   const role = RoleEnum.safeParse(config.integration.agentApiRole).success
     ? (config.integration.agentApiRole as Role)
     : 'office';

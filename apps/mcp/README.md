@@ -51,5 +51,6 @@ pnpm --filter @evidence/mcp start
 }
 ```
 
-> 付与ロールは API 側の `AGENT_API_ROLE` で決まります（既定 office＝全社read＋export）。
+> 付与ロールは API 側の `AGENT_API_ROLE` で決まります。**既定は `auditor`＝read系のみ**（セキュアデフォルト）。
+> `export_submissions_json` / `run_audit` / 書き込み系を使うには `AGENT_API_ROLE=office`（または `admin`）が必要です。
 > 本番では実 API URL と Secrets を使用してください。REST 詳細は [docs/api.md](../../docs/api.md)。

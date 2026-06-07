@@ -4,6 +4,7 @@
  * 提出→証跡(presign/PUT/confirm/download)→提出→承認→監査→エクスポート を通しで検証する。
  */
 import { rmSync } from 'node:fs';
+import ExcelJS from 'exceljs';
 import { ExportDocumentSchema } from '@evidence/shared';
 
 // ── 設定はモジュール読込前に確定する（config が import 時に env を読むため）──
@@ -31,15 +32,19 @@ interface ReqOpts {
   token?: string;
   json?: unknown;
   raw?: string;
+  bytes?: Uint8Array;
   contentType?: string;
 }
 async function req(method: string, path: string, opts: ReqOpts = {}) {
   const headers: Record<string, string> = {};
   if (opts.token) headers['authorization'] = `Bearer ${opts.token}`;
-  let body: string | undefined;
+  let body: string | Uint8Array | undefined;
   if (opts.json !== undefined) {
     headers['content-type'] = 'application/json';
     body = JSON.stringify(opts.json);
+  } else if (opts.bytes !== undefined) {
+    headers['content-type'] = opts.contentType ?? 'application/octet-stream';
+    body = opts.bytes;
   } else if (opts.raw !== undefined) {
     headers['content-type'] = opts.contentType ?? 'text/plain';
     body = opts.raw;
@@ -196,12 +201,47 @@ async function main(): Promise<void> {
   });
   assert(imp.ok && imp.data.created === 1, '取込: 1件作成される');
 
-  // 16) 外部Agent: APIキー（Bearer）で集計を取得できる
+  // 16) XLSX 一括取込: exceljs でブック生成→presign→PUT→取込
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet('s');
+  ws.addRow(['部署ID', '氏名', 'テーマ名', '達成内容', '影響度', '貢献度', '証跡有無']);
+  ws.addRow(['dept-002', 'XLSX 太郎', 'XLSX取込テスト', 'xlsxから取込', '2', '3', '資料なし']);
+  const xbytes = new Uint8Array(await wb.xlsx.writeBuffer());
+  const xpresign = await req('POST', '/admin/import/presign', {
+    token: otoken,
+    json: {
+      fileName: 'bulk.xlsx',
+      contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      fileSize: xbytes.length,
+    },
+  });
+  assert(xpresign.ok && /^imports\/imp-.+\.xlsx$/.test(xpresign.data.s3Key), 'XLSX取込: presign');
+  const xput = await req('PUT', pathOf(xpresign.data.uploadUrl), { bytes: xbytes });
+  assert(xput.ok, 'XLSX取込: ファイルPUT');
+  const ximp = await req('POST', '/admin/import', {
+    token: otoken,
+    json: { fiscalYear: '2026', s3Key: xpresign.data.s3Key, dryRun: false },
+  });
+  assert(ximp.ok && ximp.data.created === 1, 'XLSX取込: 1件作成される');
+
+  // 17) 取込の s3Key は presign 発行パターン以外を拒否
+  const badKeyImport = await req('POST', '/admin/import', {
+    token: otoken,
+    json: { fiscalYear: '2026', s3Key: 'exports/secret.json', dryRun: true },
+  });
+  assert(badKeyImport.status === 400, '取込: 任意 s3Key は拒否される');
+
+  // 18) 外部Agent: 既定 auditor は集計を読めるが export は不可（セキュアデフォルト）
   const agent = await req('GET', '/admin/stats?fiscalYear=2026', { token: 'e2e-agent-key' });
   assert(
     agent.ok && typeof agent.data.totalSubmissions === 'number',
-    '外部Agent APIキーで集計を取得できる',
+    '外部Agent(auditor) は集計を取得できる',
   );
+  const agentExport = await req('POST', '/admin/export', {
+    token: 'e2e-agent-key',
+    json: { fiscalYear: '2026', format: 'json' },
+  });
+  assert(agentExport.status === 403, '外部Agent(auditor) は export 不可（セキュアデフォルト）');
   const badKey = await req('GET', '/admin/stats?fiscalYear=2026', { token: 'wrong-key' });
   assert(badKey.status === 401, '不正なAPIキーは 401 で拒否される');
 }
