@@ -2,6 +2,7 @@
  * テーブル作成（ローカル/CI 用）。本番では CDK が同等の定義で作成する。
  * pk/sk + GSI1/2/3（すべて projection ALL）。課金は従量(PAY_PER_REQUEST)。
  */
+import { mkdirSync } from 'node:fs';
 import {
   CreateTableCommand,
   DescribeTableCommand,
@@ -9,7 +10,10 @@ import {
   type AttributeDefinition,
   ResourceNotFoundException,
 } from '@aws-sdk/client-dynamodb';
+import { config } from '../config.js';
 import { ddbRaw, TABLE } from './client.js';
+
+const isLocal = config.storage.driver === 'local';
 
 function gsi(name: string): GlobalSecondaryIndex {
   return {
@@ -23,6 +27,7 @@ function gsi(name: string): GlobalSecondaryIndex {
 }
 
 export async function tableExists(): Promise<boolean> {
+  if (isLocal) return true; // local はファイル保存のためテーブル概念なし
   try {
     await ddbRaw.send(new DescribeTableCommand({ TableName: TABLE }));
     return true;
@@ -33,6 +38,10 @@ export async function tableExists(): Promise<boolean> {
 }
 
 export async function createTableIfNotExists(): Promise<boolean> {
+  if (isLocal) {
+    mkdirSync(config.storage.localDir, { recursive: true });
+    return false;
+  }
   if (await tableExists()) return false;
 
   const attrs: AttributeDefinition[] = [

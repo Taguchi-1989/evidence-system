@@ -13,6 +13,7 @@ import { evidenceRouter } from './handlers/evidence.js';
 import { adminRouter } from './handlers/admin.js';
 import { configRouter } from './handlers/config.js';
 import { exportRouter } from './handlers/export.js';
+import { localObjectsRouter } from './handlers/local-objects.js';
 
 export function createApp() {
   const app = new Hono<AppEnv>();
@@ -28,6 +29,8 @@ export function createApp() {
   app.route('/', evidenceRouter);
   app.route('/', adminRouter);
   app.route('/', exportRouter);
+  // local モードのみ：ファイルのアップロード/ダウンロード経路（S3 presigned の代替）
+  if (config.storage.driver === 'local') app.route('/', localObjectsRouter);
 
   return app;
 }

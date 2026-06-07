@@ -46,6 +46,17 @@ export const config = {
     secretAccessKey: optionalEnv('AWS_SECRET_ACCESS_KEY'),
   },
 
+  /**
+   * ストレージ駆動方式:
+   *   'aws'   … DynamoDB + S3（LocalStack もこれ。Docker 必要）
+   *   'local' … ファイル/メモリ + ローカルFS（Docker 不要の最小モード）
+   */
+  storage: {
+    driver: env('STORAGE_DRIVER', 'aws') as 'aws' | 'local',
+    /** local モードのデータ保存先 */
+    localDir: env('LOCAL_DATA_DIR', '.localdata'),
+  },
+
   ddb: {
     tableName: env('DDB_TABLE_NAME', 'evidence-system'),
   },

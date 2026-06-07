@@ -22,6 +22,7 @@
     "stack:down": "docker compose down",
     "stack:logs": "docker compose logs -f localstack",
     "setup": "node scripts/setup.mjs",
+    "setup:local": "node scripts/set-driver.mjs local && node scripts/setup.mjs",
     "doctor": "node scripts/doctor.mjs",
     "deploy:bootstrap": "pnpm --filter @evidence/infra exec cdk bootstrap",
     "deploy:synth": "pnpm --filter @evidence/web build && pnpm --filter @evidence/infra exec cdk synth",

@@ -44,6 +44,10 @@ pnpm dev        # API:8787 + Web:5173
 - **ポリシー（運用モード）駆動**: 振る舞いは [`policy.ts`](../packages/shared/src/policy.ts) のフラグで切替。
   ハードコードで分岐せず、`resolvePolicy` / `getEffectivePolicy` を使う。
 - **証跡ファイルは presigned URL 経由**（Lambda にファイル本体を通さない）。S3キーは `s3/keys.ts`。
+- **ストレージは抽象経由で使う**: DB は `db/ops.ts`、オブジェクトは `storage/objects.ts`。
+  生の AWS SDK 呼び出しをハンドラに直書きしない。`STORAGE_DRIVER=aws|local` で
+  DynamoDB+S3 / ローカルファイル を切替（local は Docker 不要）。新しい操作が要るときは
+  両ドライバ（dynamo/memory, s3/local）に実装を足す。
 - **AWS 移植性を壊さない**: ストレージは AWS SDK v3 をそのまま使い、ローカル/本番の差は env のみ。
   認証だけ `AuthProvider` 抽象（Mock/Cognito）で差し替える。
 - **UI 文言は [`apps/web/src/i18n/messages.ts`](../apps/web/src/i18n/messages.ts) に集約**。

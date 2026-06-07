@@ -18,7 +18,7 @@ import {
   updateEvidence,
 } from '../repositories/evidence.js';
 import { assertCanEdit, assertCanView } from '../services/rbac.js';
-import { presignUpload, presignDownload, BUCKET } from '../s3/client.js';
+import { presignUpload, presignDownload, BUCKET_LABEL } from '../storage/objects.js';
 import { evidenceS3Key } from '../s3/keys.js';
 import { logActivity } from '../services/activity.js';
 import { id, nowIso } from '../lib/util.js';
@@ -53,7 +53,7 @@ evidenceRouter.post('/submissions/:id/evidence/presign', requireAuth, async (c) 
     evidenceId,
     submissionId: s.submissionId,
     fiscalYear: s.fiscalYear,
-    s3Bucket: BUCKET,
+    s3Bucket: BUCKET_LABEL,
     s3Key,
     originalFileName: input.originalFileName,
     contentType: input.contentType,

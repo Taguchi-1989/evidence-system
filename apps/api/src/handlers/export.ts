@@ -1,6 +1,5 @@
 /** エクスポートルート（要件 §10.4, §16）。MVP はジョブを同期処理して S3 に出力。 */
 import { Hono } from 'hono';
-import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { CreateExportSchema, type ExportJob } from '@evidence/shared';
 import type { AppEnv } from '../types.js';
 import { parseBody, notFound, policyBlocked } from '../lib/http.js';
@@ -14,7 +13,7 @@ import {
   listExportJobs,
 } from '../repositories/exports.js';
 import { logActivity } from '../services/activity.js';
-import { s3, BUCKET, presignDownload } from '../s3/client.js';
+import { putObject, presignDownload } from '../storage/objects.js';
 import { id, nowIso } from '../lib/util.js';
 
 export const exportRouter = new Hono<AppEnv>();
@@ -61,9 +60,7 @@ exportRouter.post('/admin/export', requireAuth, requireRole('office', 'admin'), 
     }
 
     const s3Key = `exports/fiscalYear=${input.fiscalYear}/${jobId}.${input.format}`;
-    await s3.send(
-      new PutObjectCommand({ Bucket: BUCKET, Key: s3Key, Body: content, ContentType: contentType }),
-    );
+    await putObject(s3Key, content, contentType);
 
     const completedAt = nowIso();
     await updateExportJob(jobId, { status: 'completed', s3Key, recordCount, completedAt });

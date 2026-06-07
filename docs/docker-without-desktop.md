@@ -1,6 +1,30 @@
 # Docker を「Docker Desktop なし・無償」で使う（Windows / 社内向け）
 
 LocalStack（S3+DynamoDB エミュレータ）に Docker が必要ですが、**Docker Desktop は不要**です。
+さらに、**そもそも Docker を一切使わない「最小モード」**も用意しています。
+
+## 0. いちばん簡単：Docker レス最小モード（Docker 不要）
+
+DynamoDB/S3 の代わりに**ローカルファイル**を使うモード。Docker も LocalStack も要りません。
+
+```bash
+pnpm install
+pnpm setup:local   # STORAGE_DRIVER=local を .env に設定し、ファイルで初期化
+pnpm dev           # http://localhost:5173
+```
+
+- データは `apps/api/.localdata/`（`db.json` と `objects/`）に保存され、再起動後も保持されます。
+- 証跡のアップロード/ダウンロードは API（`/_local-objects`）が presigned URL の代わりを務めるため、
+  **フロントは無改変**で動きます（本番の S3 presigned と同じ操作感）。
+- 本番(AWS)や LocalStack に戻すときは `node scripts/set-driver.mjs aws`（または `.env` の `STORAGE_DRIVER=aws`）。
+
+> 「会社PCに Docker を入れたくない／入れられない」場合の最短ルートです。
+> 一方で **LocalStack を使って本番(DynamoDB/S3)に近い形**で確認したいなら、以下の WSL2+Docker を使います。
+
+---
+
+## WSL2 + Docker Engine（LocalStack を使いたい場合）
+
 **WSL2 + Docker Engine** を使えば、ライセンス費ゼロでコマンドラインから動かせます。
 
 ## コスト・ライセンスの結論
@@ -75,10 +99,10 @@ Node.js が WSL に無ければ `sudo apt install -y nodejs npm` か nvm で導�
 
 | 方法 | Docker をローカルに入れる必要 | 備考 |
 | --- | --- | --- |
+| **Docker レス最小モード**（`pnpm setup:local`） | **不要** | 本書 §0。ローカルファイルで動く。最短 |
 | **GitHub Codespaces**（同梱の devcontainer） | **不要**（クラウドで動く） | 会社PCがロックダウンでも最有力。ブラウザだけ |
-| WSL2 + Docker Engine（本書） | 必要（無償） | 社内PCでローカル完結したいとき |
+| WSL2 + Docker Engine（本書） | 必要（無償） | LocalStack で本番に近い形で確認したいとき |
 | Podman / Rancher Desktop | 必要（いずれも無償・Desktop非該当） | docker CLI 互換。社内方針に合えば |
-| Dockerレス最小モード（未実装・要望次第で追加可） | 不要 | DynamoDB/S3 をメモリ実装に差し替える案 |
 
 > 一番ラクに「pull して動かす」なら **Codespaces**。ローカルに Docker を入れたくない／入れられない
 > 環境ではこれが最短です（このリポジトリは devcontainer 同梱済み）。

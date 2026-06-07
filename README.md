@@ -56,10 +56,22 @@ pnpm setup    # .env 自動生成 → 依存 → LocalStack 起動 → seed
 pnpm dev      # http://localhost:5173 を開く
 ```
 
-> **Docker は Docker Desktop なし・無償で使えます**（WSL2 + Docker Engine）。
-> セットアップは管理者 PowerShell で `.\scripts\setup-docker-wsl.ps1`。
-> 詳細・コスト/ライセンス・代替案 → **[docs/docker-without-desktop.md](docs/docker-without-desktop.md)**。
-> ローカルに Docker を入れたくない場合は **GitHub Codespaces**（devcontainer 同梱）が最短です。
+### Docker を使いたくない / 入れられない場合
+
+```bash
+pnpm install
+pnpm setup:local   # Docker レス最小モード（ファイル保存）
+pnpm dev
+```
+
+`pnpm setup:local` は **Docker も LocalStack も不要**。DynamoDB/S3 の代わりにローカルファイル
+（`apps/api/.localdata/`）を使い、フロント無改変で全機能が動きます。本番/LocalStack に戻すのは
+`node scripts/set-driver.mjs aws`。
+
+その他の選択肢:
+- **Docker Desktop なし・無償**で Docker を使う（WSL2 + Docker Engine）→ `.\scripts\setup-docker-wsl.ps1`
+- **GitHub Codespaces**（devcontainer 同梱）→ ローカルに何も入れずブラウザだけ
+- 比較・コスト/ライセンス → **[docs/docker-without-desktop.md](docs/docker-without-desktop.md)**
 
 - `.env` は自動生成されます（`scripts/ensure-env.mjs`）。LocalStack 用のダミー値のみで、秘密情報は不要。
 - VS Code で開くと**推奨拡張**（[.vscode/extensions.json](.vscode/extensions.json)）と

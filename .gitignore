@@ -31,6 +31,7 @@ test-results/
 !.vscode/settings.json
 !.vscode/tasks.json
 
-# localstack / cdk
+# localstack / cdk / local-mode data
 .localstack/
 cdk.out/
+.localdata/

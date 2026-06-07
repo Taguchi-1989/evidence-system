@@ -2,12 +2,10 @@
  * 初期化スクリプト：テーブル/バケット作成 → マスタ・ユーザー・ポリシー・デモ提出を投入。
  * `pnpm seed` で実行。冪等（再実行可）。
  */
-import { PutObjectCommand } from '@aws-sdk/client-s3';
 import type { AuthUser, Department, Submission, EvidenceFile } from '@evidence/shared';
 import { defaultPolicyConfig } from '@evidence/shared';
 import { createTableIfNotExists } from '../src/db/admin.js';
-import { createBucketIfNotExists } from '../src/s3/admin.js';
-import { s3, BUCKET } from '../src/s3/client.js';
+import { ensureBucket, putObject, BUCKET_LABEL } from '../src/storage/objects.js';
 import { evidenceS3Key } from '../src/s3/keys.js';
 import { putUser } from '../src/repositories/users.js';
 import { putDepartment } from '../src/repositories/departments.js';
@@ -84,7 +82,7 @@ async function seedDemoSubmissions(): Promise<void> {
     evidenceId: 'ev-001',
     submissionId: 'sub-001',
     fiscalYear: FY,
-    s3Bucket: BUCKET,
+    s3Bucket: BUCKET_LABEL,
     s3Key: evidenceS3Key({
       fiscalYear: FY,
       departmentId: 'dept-002',
@@ -107,9 +105,7 @@ async function seedDemoSubmissions(): Promise<void> {
     deletedAt: null,
   };
   const csv = '工程,改善前(分),改善後(分)\n月次集計,480,15\nレビュー,60,30\n';
-  await s3.send(
-    new PutObjectCommand({ Bucket: BUCKET, Key: ev1.s3Key, Body: csv, ContentType: 'text/csv' }),
-  );
+  await putObject(ev1.s3Key, csv, 'text/csv');
   await saveEvidence({ ...ev1, fileSize: Buffer.byteLength(csv) });
 
   // 2) 機密のため未添付・提出済み（ファイルなし、理由あり）
@@ -158,7 +154,7 @@ async function main(): Promise<void> {
   console.log(createdTable ? '  → 作成しました' : '  → 既存');
 
   console.log('[seed] バケット作成 + CORS...');
-  const createdBucket = await createBucketIfNotExists();
+  const createdBucket = await ensureBucket();
   console.log(createdBucket ? '  → 作成しました' : '  → 既存（CORS再適用）');
 
   // テーブルがアクティブになるまで少し待つ（LocalStack は即時のことが多い）
