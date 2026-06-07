@@ -1,28 +1,45 @@
 # ─────────────────────────────────────────────────────────────
-# AWS 最小デプロイバッチ（Windows / PowerShell）
-#   何をするか: 依存解決 → フロントビルド → (初回) CDK bootstrap → CDK deploy
-#   前提: Node 20+/pnpm/AWS 認証情報(aws configure 済み)
-#   使い方:  .\scripts\deploy-aws.ps1            # 2回目以降
-#            .\scripts\deploy-aws.ps1 -Bootstrap # 初回（CDKの土台を作成）
-#   流れの図解は docs/deployment.md（Mermaid）を参照。
+# AWS 最小デプロイバッチ（Windows / PowerShell）— 状態を判定しながら進む
+#   1) AWS認証の有無を判定（無ければ中止）
+#   2) フロントをビルド
+#   3) bootstrap 済みかを判定し、未済みのときだけ実行
+#   4) deploy（冪等：差分のみ適用）
+#   使い方:  .\scripts\deploy-aws.ps1            （自動判定）
+#            .\scripts\deploy-aws.ps1 -ForceBootstrap （bootstrapを強制）
 # ─────────────────────────────────────────────────────────────
-param([switch]$Bootstrap)
+param([switch]$ForceBootstrap)
 $ErrorActionPreference = 'Stop'
 
-Write-Host '==> [1/4] 依存インストール' -ForegroundColor Cyan
-pnpm install
+Write-Host '==> [1/4] AWS 認証情報を確認' -ForegroundColor Cyan
+$haveAws = [bool](Get-Command aws -ErrorAction SilentlyContinue)
+if ($haveAws) {
+  & aws sts get-caller-identity *> $null
+  if ($LASTEXITCODE -ne 0) {
+    Write-Host '   ✗ AWS 認証情報がありません。`aws configure` を実行してください。' -ForegroundColor Red
+    exit 1
+  }
+  Write-Host '   ✓ 認証OK' -ForegroundColor DarkGray
+} else {
+  Write-Host '   ! aws CLI 未検出。CDK は環境変数/プロファイルの認証を使用します。' -ForegroundColor Yellow
+}
 
 Write-Host '==> [2/4] フロントをビルド (apps/web/dist)' -ForegroundColor Cyan
 pnpm --filter @evidence/web build
 
-if ($Bootstrap) {
-  Write-Host '==> [3/4] CDK bootstrap（初回のみ・CDK用の土台をAWSに作成）' -ForegroundColor Cyan
+Write-Host '==> [3/4] CDK bootstrap の要否を判定' -ForegroundColor Cyan
+$needBootstrap = $true
+if (-not $ForceBootstrap -and $haveAws) {
+  & aws cloudformation describe-stacks --stack-name CDKToolkit *> $null
+  if ($LASTEXITCODE -eq 0) { $needBootstrap = $false }
+}
+if ($needBootstrap) {
+  Write-Host '   bootstrap を実行します（未済み or 不明 or 強制）' -ForegroundColor Yellow
   pnpm --filter @evidence/infra exec cdk bootstrap
 } else {
-  Write-Host '==> [3/4] bootstrap はスキップ（-Bootstrap で実行可能）' -ForegroundColor DarkGray
+  Write-Host '   ✓ bootstrap 済みを検出（スキップ）' -ForegroundColor DarkGray
 }
 
-Write-Host '==> [4/4] CDK deploy（CloudFormation で全リソースを作成/更新）' -ForegroundColor Cyan
+Write-Host '==> [4/4] CDK deploy（差分のみ適用）' -ForegroundColor Cyan
 pnpm --filter @evidence/infra exec cdk deploy --require-approval never
 
-Write-Host '==> 完了。出力の WebUrl / ApiUrl / UserPoolId を控えてください。' -ForegroundColor Green
+Write-Host '完了。出力の WebUrl / ApiUrl / UserPoolId を控えてください。' -ForegroundColor Green

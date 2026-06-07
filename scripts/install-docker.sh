@@ -6,8 +6,14 @@
 # ─────────────────────────────────────────────────────────────
 set -euo pipefail
 
+# 既に Docker が稼働していれば何もしない（判定して進む）
+if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
+  echo "==> Docker は既に稼働中です: $(docker --version)（変更なし）"
+  exit 0
+fi
+
 if command -v docker >/dev/null 2>&1; then
-  echo "==> docker は既に導入済み: $(docker --version)"
+  echo "==> docker は導入済み（デーモン未起動の可能性）: $(docker --version)"
 else
   echo "==> Docker Engine を公式スクリプト(get.docker.com)で導入"
   curl -fsSL https://get.docker.com -o /tmp/get-docker.sh

@@ -41,7 +41,9 @@ pnpm dev
 #   Web:  http://localhost:5173
 ```
 
-ワンショット: `pnpm setup`（env生成 → install → stack:up → seed）。
+ワンショット: `pnpm setup`。**状態を判定しながら進む冪等バッチ**で、
+`.env`/依存/Docker/LocalStack/seed のうち**足りない所だけ**を実行します（何度実行してもOK）。
+現在の状態は `pnpm doctor` で点検できます（各項目を ✓/✗ で表示し、次にやることを案内）。
 
 ## 会社の環境に持ち込んで動かす（最小手順）
 
@@ -90,9 +92,14 @@ Copilot Chat がこのプロジェクトの構成・規約（共有Zod / 単一�
 
 ## AWS デプロイ・配信・夜間バッチ
 
-ワンコマンドで AWS に展開できます（要 `aws configure`）。
+状態を自動判定するバッチで展開できます（認証確認→ビルド→bootstrap要否判定→deploy、いずれも冪等）。
 
 ```bash
+# Windows
+.\scripts\deploy-aws.ps1
+# macOS / Linux / WSL
+./scripts/deploy-aws.sh
+# 個別に実行する場合
 pnpm deploy:bootstrap   # 初回のみ（CDK の土台）
 pnpm deploy:aws         # フロントビルド + CDK deploy（API/DB/S3/CloudFront/監査バッチ）
 ```

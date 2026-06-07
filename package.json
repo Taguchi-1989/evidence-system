@@ -21,7 +21,8 @@
     "stack:up": "docker compose up -d",
     "stack:down": "docker compose down",
     "stack:logs": "docker compose logs -f localstack",
-    "setup": "node scripts/ensure-env.mjs && pnpm install && pnpm stack:up && pnpm seed",
+    "setup": "node scripts/setup.mjs",
+    "doctor": "node scripts/doctor.mjs",
     "deploy:bootstrap": "pnpm --filter @evidence/infra exec cdk bootstrap",
     "deploy:synth": "pnpm --filter @evidence/web build && pnpm --filter @evidence/infra exec cdk synth",
     "deploy:aws": "pnpm --filter @evidence/web build && pnpm --filter @evidence/infra exec cdk deploy --require-approval never"
