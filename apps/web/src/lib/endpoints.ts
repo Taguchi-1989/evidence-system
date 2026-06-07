@@ -101,4 +101,28 @@ export const endpoints = {
   listExports: (fiscalYear: string) =>
     apiFetch<{ items: ExportJob[] }>(`/admin/exports${qs({ fiscalYear })}`),
   exportDownloadUrl: (id: string) => apiFetch<{ url: string }>(`/admin/export/${id}/download`),
+
+  // 一括取込
+  importPresign: (body: { fileName: string; contentType: string; fileSize: number }) =>
+    apiFetch<{ uploadUrl: string; s3Key: string; expiresIn: number }>('/admin/import/presign', {
+      method: 'POST',
+      body,
+    }),
+  runImport: (body: { fiscalYear: string; s3Key: string; dryRun: boolean }) =>
+    apiFetch<ImportResult>('/admin/import', { method: 'POST', body }),
 };
+
+export interface ImportRowResult {
+  row: number;
+  ok: boolean;
+  message?: string;
+  submissionId?: string;
+  title?: string;
+}
+export interface ImportResult {
+  total: number;
+  created: number;
+  failed: number;
+  dryRun: boolean;
+  results: ImportRowResult[];
+}

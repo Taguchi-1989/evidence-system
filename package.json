@@ -14,6 +14,7 @@
     "build": "pnpm -r build",
     "seed": "pnpm --filter @evidence/api seed",
     "audit:run": "pnpm --filter @evidence/api audit:run",
+    "mcp": "pnpm --filter @evidence/mcp start",
     "test": "pnpm -r test",
     "test:e2e:local": "pnpm --filter @evidence/api test:e2e:local",
     "verify": "pnpm -r typecheck && pnpm -r test && pnpm --filter @evidence/api test:e2e:local",

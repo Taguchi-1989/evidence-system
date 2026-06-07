@@ -132,4 +132,7 @@ pnpm deploy:aws         # フロントビルド + CDK deploy（API/DB/S3/CloudFr
   `Authorization: Bearer` で M2M 認証でき、提出取得・監査実行・JSONエクスポートまで叩けます。
 - **証跡の抽出**: CSV/テキストに加え **XLSX**（exceljs）をサーバ側で抽出し監査に利用。
 - **監査の LLM**: `AUDIT_LLM_PROVIDER=none|anthropic|azure-openai`（**Azure OpenAI 連携**口あり。未設定でも構造チェックで動作）。
+- **MCP サーバ（AIエージェント連携）**: [`apps/mcp`](apps/mcp) が REST API をツール公開（list/get/stats/audit/export）。
+  `pnpm mcp` で起動、Claude Desktop 等から利用可（[apps/mcp/README.md](apps/mcp/README.md)）。
+- **Excel/CSV 一括取込**: 管理画面「一括取込」または `POST /admin/import`（ドライラン対応）。
 - **Copilot 拡張プロンプト**: [.github/prompts](.github/prompts)（項目追加 / 抽出器 / LLM / エンドポイント / Excel一括取込）。

@@ -172,7 +172,31 @@ async function main(): Promise<void> {
   const forbidden = await req('GET', `/submissions/${sid}`, { token: otherToken });
   assert(forbidden.status === 403, '他人の提出は閲覧できない（RBAC）');
 
-  // 15) 外部Agent: APIキー（Bearer）で集計を取得できる
+  // 15) 一括取込（CSV）: presign→PUT→ドライラン→取込
+  const csvImport =
+    '部署ID,氏名,テーマ名,達成内容,影響度,貢献度,証跡有無\ndept-002,取込 太郎,取込テスト,一括取込の検証,3,4,資料あり\n';
+  const ipresign = await req('POST', '/admin/import/presign', {
+    token: otoken,
+    json: { fileName: 'bulk.csv', contentType: 'text/csv', fileSize: csvImport.length },
+  });
+  assert(ipresign.ok && ipresign.data.s3Key, '取込: presign が発行される');
+  const iput = await req('PUT', pathOf(ipresign.data.uploadUrl), {
+    raw: csvImport,
+    contentType: 'text/csv',
+  });
+  assert(iput.ok, '取込: ファイルを PUT できる');
+  const dry = await req('POST', '/admin/import', {
+    token: otoken,
+    json: { fiscalYear: '2026', s3Key: ipresign.data.s3Key, dryRun: true },
+  });
+  assert(dry.ok && dry.data.total === 1 && dry.data.failed === 0, '取込: ドライランで1行OK');
+  const imp = await req('POST', '/admin/import', {
+    token: otoken,
+    json: { fiscalYear: '2026', s3Key: ipresign.data.s3Key, dryRun: false },
+  });
+  assert(imp.ok && imp.data.created === 1, '取込: 1件作成される');
+
+  // 16) 外部Agent: APIキー（Bearer）で集計を取得できる
   const agent = await req('GET', '/admin/stats?fiscalYear=2026', { token: 'e2e-agent-key' });
   assert(
     agent.ok && typeof agent.data.totalSubmissions === 'number',

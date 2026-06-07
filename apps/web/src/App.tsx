@@ -13,6 +13,7 @@ import { RoadmapPage } from '@/routes/RoadmapPage';
 import { PendingPage } from '@/routes/PendingPage';
 import { AuditPage } from '@/routes/AuditPage';
 import { ExportPage } from '@/routes/ExportPage';
+import { ImportPage } from '@/routes/ImportPage';
 import { MastersPage } from '@/routes/MastersPage';
 
 export function App() {
@@ -34,6 +35,7 @@ export function App() {
           <Route path="/admin/pending" element={<PendingPage />} />
           <Route path="/admin/audit" element={<AuditPage />} />
           <Route path="/admin/export" element={<ExportPage />} />
+          <Route path="/admin/import" element={<ImportPage />} />
           <Route path="/admin/masters" element={<MastersPage />} />
         </Route>
       </Route>

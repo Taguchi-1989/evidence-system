@@ -32,6 +32,7 @@ export function navItemsForRole(role: Role): NavItem[] {
         { to: '/admin/pending', label: m.pending },
         { to: '/admin/audit', label: m.audit },
         { to: '/admin/export', label: m.exports },
+        { to: '/admin/import', label: m.importData },
       ];
     case 'auditor':
       return [dashboard, { to: '/admin/audit', label: m.audit }];
@@ -44,6 +45,7 @@ export function navItemsForRole(role: Role): NavItem[] {
         { to: '/admin/pending', label: m.pending },
         { to: '/admin/audit', label: m.audit },
         { to: '/admin/export', label: m.exports },
+        { to: '/admin/import', label: m.importData },
         { to: '/admin/masters', label: m.masters },
       ];
     default:

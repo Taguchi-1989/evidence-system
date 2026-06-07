@@ -17,6 +17,7 @@ export const messages = {
     pending: '未提出・要確認',
     audit: '監査結果',
     exports: 'エクスポート',
+    importData: '一括取込',
     masters: 'マスタ管理',
     logout: 'ログアウト',
   },
