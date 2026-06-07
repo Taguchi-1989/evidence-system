@@ -1,6 +1,7 @@
 /** @evidence/shared — フロント/バック共有の型・スキーマ・enum・ポリシーの公開バレル */
 export * from './enums.js';
 export * from './policy.js';
+export * from './validation.js';
 export * from './errors.js';
 export * from './export-format.js';
 export * from './schemas/submission.js';

@@ -10,9 +10,14 @@ import {
   IMPACT_LEVEL_LABELS,
   CONTRIBUTION_LEVELS,
   CONTRIBUTION_LEVEL_LABELS,
+  OPERATION_MODE_LABELS,
+  DEFAULT_POLICY,
+  validateForSubmit,
   type CreateSubmissionInput,
   type EvidencePresence,
   type ImpactLevel,
+  type OperationMode,
+  type Problem,
 } from '@evidence/shared';
 import { endpoints } from '@/lib/endpoints';
 import { DEFAULT_FISCAL_YEAR } from '@/lib/constants';
@@ -59,16 +64,27 @@ export function SubmissionFormPage() {
   const { notify } = useToast();
   const qc = useQueryClient();
   const [saving, setSaving] = React.useState(false);
-  // 入力導線：簡易（はじめは軽く）/ 詳細（しっかり）。編集時は詳細を既定に。
-  const [detailed, setDetailed] = React.useState(false);
-  React.useEffect(() => {
-    if (isEdit) setDetailed(true);
-  }, [isEdit]);
+  const [problems, setProblems] = React.useState<Problem[]>([]);
 
   const { data: masters } = useQuery({
     queryKey: ['masters', DEFAULT_FISCAL_YEAR],
     queryFn: () => endpoints.masters(DEFAULT_FISCAL_YEAR),
   });
+
+  // 運用モードのポリシーで入力の厳しさを自動切替（Trial/MVP=軽い, Strict=必須）
+  const { data: policyCfg } = useQuery({
+    queryKey: ['policy', DEFAULT_FISCAL_YEAR],
+    queryFn: () => endpoints.policy(DEFAULT_FISCAL_YEAR),
+  });
+  const policy = policyCfg?.policy ?? DEFAULT_POLICY;
+  const mode = (policyCfg?.mode ?? 'MVP') as OperationMode;
+  const strict = policy.strictSubmissionValidation;
+  const evidenceRequired = policy.evidenceRequired;
+
+  // 詳細表示：Strict（必須化）または編集時は常に詳細。それ以外は任意で展開。
+  const [detailedManual, setDetailedManual] = React.useState(false);
+  const detailed = strict || isEdit || detailedManual;
+  const req = (label: string) => (strict ? `${label} *` : label);
 
   const { data: existing } = useQuery({
     queryKey: ['submission', id],
@@ -157,6 +173,25 @@ export function SubmissionFormPage() {
   });
 
   const onGoConfirm = handleSubmit(async (v) => {
+    // 運用モード連動の事前チェック（Strict は必須項目・証跡を要求）
+    const check = validateForSubmit(
+      {
+        title: v.title,
+        achievementText: v.achievementText,
+        impactLevelSelf: v.impactLevelSelf ? Number(v.impactLevelSelf) : null,
+        contributionLevelSelf: v.contributionLevelSelf ? Number(v.contributionLevelSelf) : null,
+        hasEvidence: v.evidencePresence === 'AVAILABLE',
+        evidencePresence: v.evidencePresence,
+        noEvidenceReason: v.noEvidenceReason,
+      },
+      policy,
+    );
+    if (check.blocked) {
+      setProblems(check.problems);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    setProblems([]);
     setSaving(true);
     try {
       const sid = await persist(v);
@@ -173,31 +208,52 @@ export function SubmissionFormPage() {
       <PageHeader
         title={isEdit ? '達成内容の編集' : messages.nav.newSubmission}
         description={
-          detailed
-            ? '影響度と貢献度を分けて記録し、説明や資料も添付できます。'
-            : 'まずは要点だけ。後から「詳細入力」で説明や資料を足せます。'
+          strict
+            ? '本格運用モードです。必須項目（*）の入力と証跡が必要です。'
+            : 'まずは要点だけでOK。後から「詳細入力」で説明や資料を足せます。'
         }
         actions={
-          <div className="flex rounded-md border p-0.5">
-            <Button
-              type="button"
-              variant={!detailed ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setDetailed(false)}
-            >
-              かんたん入力
-            </Button>
-            <Button
-              type="button"
-              variant={detailed ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setDetailed(true)}
-            >
-              詳細入力
-            </Button>
+          <div className="flex items-center gap-3">
+            <span className="rounded-full bg-secondary px-2.5 py-1 text-xs text-secondary-foreground">
+              運用モード: {OPERATION_MODE_LABELS[mode]}
+            </span>
+            {/* Strict / 編集時は詳細固定。それ以外は簡易/詳細を切替可能 */}
+            {!strict && !isEdit && (
+              <div className="flex rounded-md border p-0.5">
+                <Button
+                  type="button"
+                  variant={!detailed ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setDetailedManual(false)}
+                >
+                  かんたん入力
+                </Button>
+                <Button
+                  type="button"
+                  variant={detailed ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setDetailedManual(true)}
+                >
+                  詳細入力
+                </Button>
+              </div>
+            )}
           </div>
         }
       />
+
+      {problems.length > 0 && (
+        <Card className="mb-4 border-amber-300 bg-amber-50">
+          <CardContent className="py-3 text-sm text-amber-800">
+            <p className="mb-1 font-medium">提出に必要な項目をご確認ください：</p>
+            <ul className="list-inside list-disc">
+              {problems.map((p, i) => (
+                <li key={i}>{p.message}</li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
 
       <form className="space-y-6">
         <Card>
@@ -231,7 +287,7 @@ export function SubmissionFormPage() {
               </Field>
             </div>
             <div className="sm:col-span-2">
-              <Field label={messages.fields.achievement}>
+              <Field label={req(messages.fields.achievement)}>
                 <Textarea rows={4} aria-label={messages.fields.achievement} {...register('achievementText')} />
               </Field>
             </div>
@@ -243,7 +299,7 @@ export function SubmissionFormPage() {
             <CardTitle>影響度・貢献度</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
-            <Field label={messages.fields.impactLevel}>
+            <Field label={req(messages.fields.impactLevel)}>
               <Select aria-label={messages.fields.impactLevel} {...register('impactLevelSelf')}>
                 <option value="">未選択</option>
                 {IMPACT_LEVELS.map((l) => (
@@ -253,7 +309,7 @@ export function SubmissionFormPage() {
                 ))}
               </Select>
             </Field>
-            <Field label={messages.fields.contributionLevel}>
+            <Field label={req(messages.fields.contributionLevel)}>
               <Select aria-label={messages.fields.contributionLevel} {...register('contributionLevelSelf')}>
                 <option value="">未選択</option>
                 {CONTRIBUTION_LEVELS.map((l) => (
@@ -281,7 +337,11 @@ export function SubmissionFormPage() {
             <CardTitle>証跡資料</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">{messages.evidence.futureNote}</p>
+            <p className="text-sm text-muted-foreground">
+              {evidenceRequired
+                ? 'この運用モードでは、証跡資料の添付（または証跡なし理由の入力）が必要です。'
+                : messages.evidence.futureNote}
+            </p>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label={messages.fields.evidencePresence}>
                 <Select {...register('evidencePresence')}>
