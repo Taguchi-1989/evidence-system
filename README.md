@@ -71,3 +71,6 @@ pnpm deploy:aws         # フロントビルド + CDK deploy（API/DB/S3/CloudFr
 
 **仕組みと流れの図解（Mermaid）→ [docs/deployment.md](docs/deployment.md)**
 （AWS 設定バッチ / フロント配信(S3+CloudFront) / 夜間監査バッチ が何をして何ができるようになるか）
+
+**構成の選び方（コスト×利用者規模の比較表）→ [docs/aws-architecture-comparison.md](docs/aws-architecture-comparison.md)**
+（EC2 / S3 / DynamoDB / Aurora などの組み合わせ別コスト概算と、規模ごとの最適解）
