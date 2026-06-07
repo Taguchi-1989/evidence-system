@@ -6,6 +6,7 @@ import {
   EVIDENCE_TYPE_LABELS,
   RELATED_AXES,
   RELATED_AXIS_LABELS,
+  ALLOWED_UPLOAD_EXTENSIONS,
   isAllowedExtension,
   type EvidenceType,
   type RelatedAxis,
@@ -87,7 +88,8 @@ export function EvidenceManager({
     }
   };
 
-  const handleDelete = async (evidenceId: string) => {
+  const handleDelete = async (evidenceId: string, fileName: string) => {
+    if (!window.confirm(`${messages.evidence.deleteConfirm}\n${fileName}`)) return;
     try {
       await endpoints.deleteEvidence(submissionId, evidenceId);
       notify(messages.toast.deleted);
@@ -103,10 +105,10 @@ export function EvidenceManager({
         <Table>
           <THead>
             <TR>
-              <TH>ファイル</TH>
+              <TH>{messages.evidence.fileLabel}</TH>
               <TH>{messages.fields.evidenceType}</TH>
               <TH>{messages.fields.relatedAxis}</TH>
-              <TH>状態</TH>
+              <TH>{messages.fields.status}</TH>
               <TH></TH>
             </TR>
           </THead>
@@ -131,7 +133,7 @@ export function EvidenceManager({
                         variant="ghost"
                         size="sm"
                         className="text-destructive"
-                        onClick={() => void handleDelete(ev.evidenceId)}
+                        onClick={() => void handleDelete(ev.evidenceId, ev.originalFileName)}
                       >
                         {messages.actions.delete}
                       </Button>
@@ -143,19 +145,22 @@ export function EvidenceManager({
           </TBody>
         </Table>
       ) : (
-        <p className="text-sm text-muted-foreground">添付された資料はまだありません。</p>
+        <p className="text-sm text-muted-foreground">{messages.evidence.empty}</p>
       )}
 
       {editable && (
         <div className="rounded-md border border-dashed p-4">
           <p className="text-sm text-muted-foreground">{messages.evidence.attachHint}</p>
-          <p className="mb-3 text-xs text-muted-foreground">{messages.evidence.optionalNote}</p>
+          <p className="text-xs text-muted-foreground">{messages.evidence.optionalNote}</p>
+          <p className="mb-3 text-xs text-muted-foreground">{messages.evidence.allowedFormatsLabel}</p>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1">
-              <Label>ファイル</Label>
+              <Label>{messages.evidence.fileLabel}</Label>
               <Input
                 ref={fileInputRef}
                 type="file"
+                accept={ALLOWED_UPLOAD_EXTENSIONS.map((e) => `.${e}`).join(',')}
+                disabled={uploading}
                 onChange={(e) => setFile(e.target.files?.[0] ?? null)}
               />
             </div>
@@ -192,7 +197,7 @@ export function EvidenceManager({
           </div>
           <div className="mt-3">
             <Button onClick={() => void handleUpload()} disabled={!file || uploading}>
-              {uploading ? 'アップロード中...' : messages.actions.upload}
+              {uploading ? messages.evidence.uploading : messages.actions.upload}
             </Button>
           </div>
         </div>

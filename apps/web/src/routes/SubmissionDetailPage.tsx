@@ -3,6 +3,7 @@ import * as React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { AuthUser, Submission } from '@evidence/shared';
+import { ROLE_LABELS } from '@evidence/shared';
 import { endpoints } from '@/lib/endpoints';
 import { useAuth } from '@/auth/AuthContext';
 import { useToast } from '@/components/ui/toast';
@@ -12,6 +13,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { SubmissionSummary } from '@/components/SubmissionSummary';
 import { EvidenceManager } from '@/components/EvidenceManager';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Loading } from '@/components/ui/loading';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
@@ -42,7 +44,7 @@ export function SubmissionDetailPage() {
     enabled: Boolean(id),
   });
 
-  if (isLoading || !s || !user) return <p className="text-sm text-muted-foreground">読み込み中...</p>;
+  if (isLoading || !s || !user) return <Loading />;
 
   const isOwner = s.userId === user.userId;
   const reviewer = canReview(user, s);
@@ -65,7 +67,7 @@ export function SubmissionDetailPage() {
   return (
     <div>
       <PageHeader
-        title={s.title || '(無題)'}
+        title={s.title || messages.common.untitled}
         description={`${s.userName} ・ ${s.departmentId}`}
         actions={
           <div className="flex items-center gap-2">
@@ -81,12 +83,35 @@ export function SubmissionDetailPage() {
         }
       />
 
-      {s.reviewComment && (
+      {(s.reviewHistory?.length ?? 0) > 0 ? (
         <Card className="mb-4">
-          <CardContent className="py-3 text-sm">
-            <span className="text-muted-foreground">確認者コメント：</span> {s.reviewComment}
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm">{messages.review.historyTitle}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {s.reviewHistory!.map((e, i) => (
+              <div key={i} className="border-l-2 border-muted pl-3 text-sm">
+                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                  <Badge variant="muted">{messages.review.actionLabels[e.action]}</Badge>
+                  <span>
+                    {e.actorName}（{ROLE_LABELS[e.actorRole as keyof typeof ROLE_LABELS] ?? e.actorRole}）
+                  </span>
+                  <span>{new Date(e.at).toLocaleString('ja-JP')}</span>
+                </div>
+                {e.comment && <p className="mt-0.5">{e.comment}</p>}
+              </div>
+            ))}
           </CardContent>
         </Card>
+      ) : (
+        s.reviewComment && (
+          <Card className="mb-4">
+            <CardContent className="py-3 text-sm">
+              <span className="text-muted-foreground">{messages.review.latestCommentLabel}</span>{' '}
+              {s.reviewComment}
+            </CardContent>
+          </Card>
+        )
       )}
 
       <Card>
@@ -140,7 +165,7 @@ export function SubmissionDetailPage() {
       {reviewer && s.status === 'submitted' && (
         <Card className="mt-4 border-primary/30">
           <CardHeader>
-            <CardTitle>確認（承認・差戻し）</CardTitle>
+            <CardTitle>{messages.pages.detailReview}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <Textarea

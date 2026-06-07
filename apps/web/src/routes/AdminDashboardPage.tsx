@@ -2,8 +2,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { endpoints } from '@/lib/endpoints';
 import { DEFAULT_FISCAL_YEAR } from '@/lib/constants';
+import { messages } from '@/i18n/messages';
 import { PageHeader } from '@/components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Loading } from '@/components/ui/loading';
 import { Table, THead, TBody, TR, TH, TD } from '@/components/ui/table';
 
 function Stat({ label, value, sub }: { label: string; value: number | string; sub?: string }) {
@@ -55,15 +57,15 @@ export function AdminDashboardPage() {
   if (isLoading || !st) {
     return (
       <div>
-        <PageHeader title="管理ダッシュボード" />
-        <p className="text-sm text-muted-foreground">読み込み中...</p>
+        <PageHeader title={messages.pages.adminTitle} />
+        <Loading />
       </div>
     );
   }
 
   return (
     <div>
-      <PageHeader title="管理ダッシュボード" description={`${st.fiscalYear}年度の状況`} />
+      <PageHeader title={messages.pages.adminTitle} description={`${st.fiscalYear}年度の状況`} />
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Stat label="提出総数" value={st.totalSubmissions} />

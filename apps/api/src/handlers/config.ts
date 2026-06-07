@@ -9,6 +9,7 @@ import {
   type MastersResponse,
 } from '@evidence/shared';
 import type { AppEnv } from '../types.js';
+import { config } from '../config.js';
 import { parseBody } from '../lib/http.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 import { getEffectivePolicy } from '../services/policy.js';
@@ -22,6 +23,14 @@ export const configRouter = new Hono<AppEnv>();
 function fy(c: { req: { query: (k: string) => string | undefined } }): string {
   return c.req.query('fiscalYear') ?? currentFiscalYear();
 }
+
+/**
+ * アプリ実行情報（認証方式・ストレージ方式）。認証不要。
+ * フロントは mock 認証時に注意バナーを出すためにこれを参照する。
+ */
+configRouter.get('/config/app', (c) =>
+  c.json({ authProvider: config.auth.provider, storageDriver: config.storage.driver }),
+);
 
 /** 有効ポリシー（フロントが UI 文言/必須表示を切替えるために取得） */
 configRouter.get('/config/policy', requireAuth, async (c) => {

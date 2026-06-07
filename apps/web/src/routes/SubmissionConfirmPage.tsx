@@ -10,6 +10,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { SubmissionSummary } from '@/components/SubmissionSummary';
 import { EvidenceManager } from '@/components/EvidenceManager';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Loading } from '@/components/ui/loading';
 import { Button } from '@/components/ui/button';
 
 export function SubmissionConfirmPage() {
@@ -26,7 +27,7 @@ export function SubmissionConfirmPage() {
     enabled: Boolean(id),
   });
 
-  if (isLoading || !s) return <p className="text-sm text-muted-foreground">読み込み中...</p>;
+  if (isLoading || !s) return <Loading />;
 
   const handleSubmit = async () => {
     setSubmitting(true);
@@ -48,8 +49,8 @@ export function SubmissionConfirmPage() {
   return (
     <div>
       <PageHeader
-        title="提出内容の確認"
-        description="内容をご確認のうえ、提出してください。"
+        title={messages.pages.confirmTitle}
+        description={messages.pages.confirmDescription}
         actions={
           <Link to={`/submissions/${s.submissionId}/edit`}>
             <Button variant="outline">{messages.actions.edit}</Button>

@@ -206,7 +206,7 @@ export function SubmissionFormPage() {
   return (
     <div>
       <PageHeader
-        title={isEdit ? '達成内容の編集' : messages.nav.newSubmission}
+        title={isEdit ? messages.pages.submissionEdit : messages.nav.newSubmission}
         description={
           strict
             ? '本格運用モードです。必須項目（*）の入力と証跡が必要です。'
@@ -226,7 +226,7 @@ export function SubmissionFormPage() {
                   size="sm"
                   onClick={() => setDetailedManual(false)}
                 >
-                  かんたん入力
+                  {messages.form.easyInput}
                 </Button>
                 <Button
                   type="button"
@@ -234,7 +234,7 @@ export function SubmissionFormPage() {
                   size="sm"
                   onClick={() => setDetailedManual(true)}
                 >
-                  詳細入力
+                  {messages.form.detailedInput}
                 </Button>
               </div>
             )}
@@ -264,13 +264,14 @@ export function SubmissionFormPage() {
             {detailed && (
               <>
                 <Field label={messages.fields.department}>
-                  <Select {...register('departmentId')}>
-                    {masters?.departments.map((d) => (
-                      <option key={d.departmentId} value={d.departmentId}>
-                        {d.name}
-                      </option>
-                    ))}
-                  </Select>
+                  <div className="flex h-9 items-center rounded-md border bg-muted/40 px-3 text-sm text-muted-foreground">
+                    {masters?.departments.find((d) => d.departmentId === user?.departmentId)?.name ??
+                      user?.departmentId ??
+                      '—'}
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {messages.form.departmentReadonlyNote}
+                  </p>
                 </Field>
                 <Field label={messages.fields.userName}>
                   <Input {...register('userName')} />

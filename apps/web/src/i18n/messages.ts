@@ -29,6 +29,12 @@ export const messages = {
     futureNote: '次回以降、根拠資料の添付を段階的に標準化していく予定です。',
     noEvidenceReasonLabel: '資料がない場合の状況（任意）',
     confidentialNote: '機密資料のため添付できない場合は、理由と所在を記録してください。',
+    fileLabel: 'ファイル',
+    allowedFormatsLabel:
+      '対応形式：PDF / PPTX / XLSX / XLS / CSV / 画像（PNG・JPG・GIF・WebP）。1ファイル 50MB まで。',
+    uploading: 'アップロード中...',
+    deleteConfirm: 'この添付資料を削除します。よろしいですか？',
+    empty: '添付された資料はまだありません。',
   },
 
   // 導入メッセージ（§22）
@@ -82,5 +88,68 @@ export const messages = {
     exported: 'エクスポートを作成しました',
     auditDone: '監査Agentを実行しました',
     error: 'エラーが発生しました',
+  },
+
+  // 共通（画面横断で使う短い文言）
+  common: {
+    loading: '読み込み中...',
+    untitled: '(無題)',
+    detail: '詳細',
+    none: '—',
+    noAccessTitle: 'この画面を表示する権限がありません',
+    noAccessBody: 'お使いのロールではこのページにアクセスできません。ダッシュボードからご利用ください。',
+    backToDashboard: 'ダッシュボードへ戻る',
+  },
+
+  // 画面タイトル・説明（要件 §11.1）
+  pages: {
+    submissionEdit: '達成内容の編集',
+    confirmTitle: '提出内容の確認',
+    confirmDescription: '内容をご確認のうえ、提出してください。',
+    detailReview: '確認（承認・差戻し）',
+    teamTitle: '部門一覧',
+    teamDescription: '配下部署の提出状況を確認できます。',
+    pendingTitle: '未提出・要確認',
+    pendingDescription: '督促・確認の対象を抽出します。',
+    auditTitle: '監査結果',
+    auditDescription: '夜間監査Agentの一次チェック結果（参考情報）。最終評価ではありません。',
+    exportTitle: 'エクスポート',
+    exportDescription: '他システムへの移行・連携用に CSV / JSON を出力します。',
+    importTitle: '一括取込（Excel / CSV）',
+    importDescription:
+      '過去の成果などをまとめて登録します。まず検証（ドライラン）→ 問題なければ取込実行。',
+    mastersTitle: 'マスタ管理',
+    mastersDescription: '運用モード・ポリシー設定と部署マスタを管理します。',
+    adminTitle: '管理ダッシュボード',
+  },
+
+  // 入力フォーム
+  form: {
+    easyInput: 'かんたん入力',
+    detailedInput: '詳細入力',
+    departmentReadonlyNote: '部署は所属に基づき自動設定されます。',
+  },
+
+  // 確認（承認/差戻し/コメント）の履歴表示
+  review: {
+    latestCommentLabel: '確認者コメント：',
+    historyTitle: '確認の履歴',
+    actionLabels: {
+      approve: '承認',
+      reject: '差戻し',
+      comment: 'コメント',
+    },
+  },
+
+  // デモ認証の注意喚起（既定の mock 認証は誰でもロール切替できる）
+  mock: {
+    banner:
+      'デモ認証モードです（ヘッダーのロール切替で誰でも管理者になれます）。社内の実運用では AUTH_PROVIDER=cognito に切り替えてください。',
+  },
+
+  // 初期データ未投入時の案内
+  setup: {
+    notSeeded:
+      '利用者データが見つかりません。初回はターミナルで「pnpm setup」（Docker を使わない場合は「pnpm setup:local」）を実行してください。',
   },
 } as const;
