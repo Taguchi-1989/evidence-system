@@ -88,7 +88,7 @@ TOKEN=$(curl -s -X POST http://localhost:8787/auth/login \
 ### 監査Agent
 | Method | Path | ロール | 説明 |
 | --- | --- | --- | --- |
-| POST | `/admin/audit/run` | office/admin | 監査実行 `{fiscalYear, submissionId?}` → サマリー |
+| POST | `/admin/audit/run` | office/admin | 監査実行 `{fiscalYear, submissionId?}` → サマリー（**レート制限あり**：`AUDIT_RUN_RATE_PER_MIN`/分/ユーザー、超過は 429 + Retry-After） |
 | GET | `/admin/audit?fiscalYear=` | office/auditor/admin/manager | 年度の監査結果 |
 | GET | `/submissions/:id/audit` | 要 | 提出単位の監査結果（表示ポリシー依存） |
 

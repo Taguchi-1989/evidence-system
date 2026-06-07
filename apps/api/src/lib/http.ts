@@ -22,6 +22,8 @@ export const notFound = (m = '見つかりません') => new HttpError(404, ERRO
 export const conflict = (m: string) => new HttpError(409, ERROR_CODES.CONFLICT, m);
 export const policyBlocked = (m: string, details?: ApiError['error']['details']) =>
   new HttpError(422, ERROR_CODES.POLICY_BLOCKED, m, details);
+export const tooManyRequests = (m = 'リクエストが多すぎます') =>
+  new HttpError(429, ERROR_CODES.RATE_LIMITED, m);
 export const badRequest = (m: string, details?: ApiError['error']['details']) =>
   new HttpError(400, ERROR_CODES.VALIDATION, m, details);
 

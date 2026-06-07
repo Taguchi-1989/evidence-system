@@ -96,6 +96,8 @@ export const config = {
       deployment: optionalEnv('AZURE_OPENAI_DEPLOYMENT'), // デプロイ名
       apiVersion: env('AZURE_OPENAI_API_VERSION', '2024-08-01-preview'),
     },
+    /** 監査実行のレート制限（1分あたり・ユーザー単位）。LLMコスト暴走の抑止 */
+    runRatePerMin: Number(env('AUDIT_RUN_RATE_PER_MIN', '5')),
   },
 
   /** 外部Agentソフト等からの API 連携 */

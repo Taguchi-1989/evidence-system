@@ -118,10 +118,12 @@ export interface ImportRowResult {
   message?: string;
   submissionId?: string;
   title?: string;
+  action?: 'created' | 'updated';
 }
 export interface ImportResult {
   total: number;
   created: number;
+  updated: number;
   failed: number;
   dryRun: boolean;
   results: ImportRowResult[];

@@ -18,6 +18,7 @@ export const ERROR_CODES = {
   VALIDATION: 'VALIDATION',
   CONFLICT: 'CONFLICT',
   POLICY_BLOCKED: 'POLICY_BLOCKED',
+  RATE_LIMITED: 'RATE_LIMITED',
   INTERNAL: 'INTERNAL',
 } as const;
 export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES];

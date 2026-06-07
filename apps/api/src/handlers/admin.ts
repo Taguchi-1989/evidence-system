@@ -4,6 +4,8 @@ import { AuditRunRequestSchema, type AuthUser, type Policy } from '@evidence/sha
 import type { AppEnv } from '../types.js';
 import { notFound, parseBody, policyBlocked } from '../lib/http.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
+import { rateLimit } from '../middleware/rate-limit.js';
+import { config } from '../config.js';
 import { assertCanView } from '../services/rbac.js';
 import { computeStats } from '../services/stats.js';
 import { getEffectivePolicy } from '../services/policy.js';
@@ -79,8 +81,17 @@ adminRouter.get(
   },
 );
 
-/** 監査Agent 実行（事務局・管理者。auditAgentEnabled でゲート / §10.5, §15） */
-adminRouter.post('/admin/audit/run', requireAuth, requireRole('office', 'admin'), async (c) => {
+/** 監査Agent 実行（事務局・管理者。auditAgentEnabled でゲート / §10.5, §15）。連打はレート制限。 */
+adminRouter.post(
+  '/admin/audit/run',
+  requireAuth,
+  requireRole('office', 'admin'),
+  rateLimit({
+    max: config.audit.runRatePerMin,
+    windowMs: 60_000,
+    keyFn: (c) => `audit:${c.get('user').userId}`,
+  }),
+  async (c) => {
   const input = await parseBody(c, AuditRunRequestSchema);
   const { policy } = await getEffectivePolicy(input.fiscalYear);
   if (!policy.auditAgentEnabled) {

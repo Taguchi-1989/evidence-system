@@ -49,7 +49,7 @@ export function ImportPage() {
       });
       setResult(res);
       if (!dryRun) {
-        notify(`${res.created} 件を取り込みました`);
+        notify(`取込完了：新規 ${res.created} / 更新 ${res.updated} / エラー ${res.failed}`);
         void qc.invalidateQueries({ queryKey: ['submissions'] });
         void qc.invalidateQueries({ queryKey: ['stats', DEFAULT_FISCAL_YEAR] });
       } else {
@@ -113,7 +113,7 @@ export function ImportPage() {
               {result.dryRun ? '検証結果' : '取込結果'}：
               <span className="ml-2">
                 全 {result.total} 行 ・ OK {result.total - result.failed} ・ エラー {result.failed}
-                {!result.dryRun && ` ・ 作成 ${result.created}`}
+                {!result.dryRun && ` ・ 新規 ${result.created} / 更新 ${result.updated}`}
               </span>
             </CardTitle>
           </CardHeader>

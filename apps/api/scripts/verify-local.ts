@@ -14,6 +14,7 @@ process.env.LOCAL_DATA_DIR = TMP;
 process.env.AUTH_PROVIDER = 'mock';
 process.env.NODE_ENV = 'test';
 process.env.AGENT_API_KEYS = 'e2e-agent-key'; // 外部Agent APIキー認証の検証用
+process.env.AUDIT_RUN_RATE_PER_MIN = '2'; // レート制限の検証用（低めに）
 rmSync(TMP, { recursive: true, force: true }); // まっさらから開始
 
 const { seedAll } = await import('../src/seed.js');
@@ -200,6 +201,12 @@ async function main(): Promise<void> {
     json: { fiscalYear: '2026', s3Key: ipresign.data.s3Key, dryRun: false },
   });
   assert(imp.ok && imp.data.created === 1, '取込: 1件作成される');
+  // 冪等：同じ内容を再取込しても重複せず upsert（更新）になる
+  const imp2 = await req('POST', '/admin/import', {
+    token: otoken,
+    json: { fiscalYear: '2026', s3Key: ipresign.data.s3Key, dryRun: false },
+  });
+  assert(imp2.ok && imp2.data.created === 0 && imp2.data.updated === 1, '取込: 再取込はupsert（重複作成しない）');
 
   // 16) XLSX 一括取込: exceljs でブック生成→presign→PUT→取込
   const wb = new ExcelJS.Workbook();
@@ -244,6 +251,17 @@ async function main(): Promise<void> {
   assert(agentExport.status === 403, '外部Agent(auditor) は export 不可（セキュアデフォルト）');
   const badKey = await req('GET', '/admin/stats?fiscalYear=2026', { token: 'wrong-key' });
   assert(badKey.status === 401, '不正なAPIキーは 401 で拒否される');
+
+  // 19) 監査の連続実行はレート制限（429）— AUDIT_RUN_RATE_PER_MIN=2
+  let got429 = false;
+  for (let i = 0; i < 4; i++) {
+    const r = await req('POST', '/admin/audit/run', { token: otoken, json: { fiscalYear: '2026' } });
+    if (r.status === 429) {
+      got429 = true;
+      break;
+    }
+  }
+  assert(got429, '監査の連続実行はレート制限される(429)');
 }
 
 main()
