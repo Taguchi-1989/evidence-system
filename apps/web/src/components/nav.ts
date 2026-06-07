@@ -19,6 +19,7 @@ export function navItemsForRole(role: Role): NavItem[] {
         dashboard,
         { to: '/team', label: m.team },
         { to: '/admin/bi', label: m.bi },
+        { to: '/admin/roadmap', label: m.roadmap },
         { to: '/admin/pending', label: m.pending },
         { to: '/admin/audit', label: m.audit },
       ];
@@ -27,6 +28,7 @@ export function navItemsForRole(role: Role): NavItem[] {
         dashboard,
         { to: '/admin', label: m.admin },
         { to: '/admin/bi', label: m.bi },
+        { to: '/admin/roadmap', label: m.roadmap },
         { to: '/admin/pending', label: m.pending },
         { to: '/admin/audit', label: m.audit },
         { to: '/admin/export', label: m.exports },
@@ -38,6 +40,7 @@ export function navItemsForRole(role: Role): NavItem[] {
         dashboard,
         { to: '/admin', label: m.admin },
         { to: '/admin/bi', label: m.bi },
+        { to: '/admin/roadmap', label: m.roadmap },
         { to: '/admin/pending', label: m.pending },
         { to: '/admin/audit', label: m.audit },
         { to: '/admin/export', label: m.exports },

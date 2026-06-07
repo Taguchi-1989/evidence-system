@@ -82,8 +82,8 @@ export function BiDashboardPage() {
                 <BubbleChart
                   points={points}
                   colorFor={colorFor}
-                  xLabel={AXIS.xLabel}
-                  yLabel={AXIS.yLabel}
+                  xAxis={AXIS.xAxis}
+                  yAxis={AXIS.yAxis}
                   quadrants={QUADRANTS}
                   selectedId={selectedId}
                   onSelect={setSelectedId}

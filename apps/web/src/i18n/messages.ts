@@ -13,6 +13,7 @@ export const messages = {
     team: '部門一覧',
     admin: '管理ダッシュボード',
     bi: 'BI ダッシュボード',
+    roadmap: 'ロードマップ',
     pending: '未提出・要確認',
     audit: '監査結果',
     exports: 'エクスポート',

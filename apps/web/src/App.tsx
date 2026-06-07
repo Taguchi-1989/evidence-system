@@ -9,6 +9,7 @@ import { SubmissionDetailPage } from '@/routes/SubmissionDetailPage';
 import { TeamPage } from '@/routes/TeamPage';
 import { AdminDashboardPage } from '@/routes/AdminDashboardPage';
 import { BiDashboardPage } from '@/routes/BiDashboardPage';
+import { RoadmapPage } from '@/routes/RoadmapPage';
 import { PendingPage } from '@/routes/PendingPage';
 import { AuditPage } from '@/routes/AuditPage';
 import { ExportPage } from '@/routes/ExportPage';
@@ -29,6 +30,7 @@ export function App() {
           <Route path="/team" element={<TeamPage />} />
           <Route path="/admin" element={<AdminDashboardPage />} />
           <Route path="/admin/bi" element={<BiDashboardPage />} />
+          <Route path="/admin/roadmap" element={<RoadmapPage />} />
           <Route path="/admin/pending" element={<PendingPage />} />
           <Route path="/admin/audit" element={<AuditPage />} />
           <Route path="/admin/export" element={<ExportPage />} />
