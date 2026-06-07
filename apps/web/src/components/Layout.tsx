@@ -31,9 +31,9 @@ export function Layout() {
               {messages.appTagline}
             </span>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <RoleSwitcher />
-            <span className="text-xs text-muted-foreground">
+            <span className="hidden text-xs text-muted-foreground sm:inline">
               {user.name}（{ROLE_LABELS[user.role]}）
             </span>
             <Button
@@ -56,17 +56,17 @@ export function Layout() {
         </div>
       )}
 
-      <div className="mx-auto flex max-w-6xl gap-6 px-4 py-6">
-        <nav className="w-48 shrink-0">
-          <ul className="space-y-1">
+      <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-6 md:flex-row md:gap-6">
+        <nav className="md:w-48 md:shrink-0">
+          <ul className="flex gap-1 overflow-x-auto pb-1 md:flex-col md:space-y-1 md:overflow-visible md:pb-0">
             {items.map((it) => (
-              <li key={it.to}>
+              <li key={it.to} className="shrink-0">
                 <NavLink
                   to={it.to}
                   end={it.to === '/dashboard'}
                   className={({ isActive }) =>
                     cn(
-                      'block rounded-md px-3 py-2 text-sm transition-colors',
+                      'block whitespace-nowrap rounded-md px-3 py-2 text-sm transition-colors',
                       isActive
                         ? 'bg-primary text-primary-foreground'
                         : 'text-foreground hover:bg-accent',
