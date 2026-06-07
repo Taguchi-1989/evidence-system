@@ -94,6 +94,46 @@ server.tool(
   },
 );
 
+// ── 書き込み系（要 reviewer 権限：AGENT_API_ROLE=office/admin/manager）──
+server.tool(
+  'approve_submission',
+  '提出を承認する。AGENT_API_ROLE が承認可能ロール（office/admin/担当上長）である必要がある。',
+  { submissionId: z.string(), comment: z.string().optional() },
+  async ({ submissionId, comment }) =>
+    ok(
+      await api(`/submissions/${submissionId}/approve`, {
+        method: 'POST',
+        body: JSON.stringify({ comment: comment ?? '' }),
+      }),
+    ),
+);
+
+server.tool(
+  'reject_submission',
+  '提出を差戻しする。要 reviewer 権限。',
+  { submissionId: z.string(), comment: z.string().optional() },
+  async ({ submissionId, comment }) =>
+    ok(
+      await api(`/submissions/${submissionId}/reject`, {
+        method: 'POST',
+        body: JSON.stringify({ comment: comment ?? '' }),
+      }),
+    ),
+);
+
+server.tool(
+  'comment_submission',
+  '提出に確認者コメントを記録する。要 reviewer 権限。',
+  { submissionId: z.string(), comment: z.string() },
+  async ({ submissionId, comment }) =>
+    ok(
+      await api(`/submissions/${submissionId}/comment`, {
+        method: 'POST',
+        body: JSON.stringify({ comment }),
+      }),
+    ),
+);
+
 const transport = new StdioServerTransport();
 await server.connect(transport);
 // stderr に出すと stdio プロトコルを汚さない

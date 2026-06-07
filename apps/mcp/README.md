@@ -13,6 +13,13 @@
 | `get_policy` | 運用モード・ポリシー |
 | `run_audit` | 監査Agent 実行（参考判定） |
 | `export_submissions_json` | 年度の全成果を JSON(§16.2) で取得 |
+| `approve_submission` | 提出を承認（**要 reviewer 権限**） |
+| `reject_submission` | 提出を差戻し（**要 reviewer 権限**） |
+| `comment_submission` | 確認者コメントを記録（**要 reviewer 権限**） |
+
+> 書き込み系（承認/差戻し/コメント）は、API 側 `AGENT_API_ROLE` が承認可能ロール
+> （`office` / `admin` / 担当上長 `manager`）のときのみ成功します。読み取りのみで運用する場合は
+> 既定の `office` でも閲覧/集計/エクスポート/監査実行が可能です。
 
 ## 認証・接続
 
