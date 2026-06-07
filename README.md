@@ -41,7 +41,30 @@ pnpm dev
 #   Web:  http://localhost:5173
 ```
 
-ワンショット: `pnpm setup`（install → stack:up → seed）。
+ワンショット: `pnpm setup`（env生成 → install → stack:up → seed）。
+
+## 会社の環境に持ち込んで動かす（最小手順）
+
+前提: VS Code + Node 20+ / pnpm / Docker。
+
+```bash
+git clone https://github.com/Taguchi-1989/evidence-system.git
+cd evidence-system
+pnpm setup    # .env 自動生成 → 依存 → LocalStack 起動 → seed
+pnpm dev      # http://localhost:5173 を開く
+```
+
+- `.env` は自動生成されます（`scripts/ensure-env.mjs`）。LocalStack 用のダミー値のみで、秘密情報は不要。
+- VS Code で開くと**推奨拡張**（[.vscode/extensions.json](.vscode/extensions.json)）と
+  **ワンクリックのタスク**（[.vscode/tasks.json](.vscode/tasks.json): LocalStack起動 / seed / dev）が使えます。
+- **Dev Container / Codespaces 対応**（[.devcontainer/devcontainer.json](.devcontainer/devcontainer.json)）。
+  「Reopen in Container」で Node・pnpm・Docker・Copilot 拡張まで揃った状態で即開発できます。
+
+### GitHub Copilot で開発する
+
+リポジトリに **Copilot 指示書**（[.github/copilot-instructions.md](.github/copilot-instructions.md)）を同梱。
+Copilot Chat がこのプロジェクトの構成・規約（共有Zod / 単一テーブルキー / RBAC / ポリシー駆動 / 柔らかいUI文言）を
+理解した状態で補完・提案します。Copilot に「このリポジトリの方針に沿って〜」と頼むだけで文脈が効きます。
 
 ## よく使うスクリプト（ルート）
 

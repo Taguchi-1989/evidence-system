@@ -8,6 +8,8 @@
     "node": ">=20"
   },
   "scripts": {
+    "env:init": "node scripts/ensure-env.mjs",
+    "predev": "node scripts/ensure-env.mjs",
     "dev": "pnpm --parallel --filter \"./apps/*\" dev",
     "build": "pnpm -r build",
     "seed": "pnpm --filter @evidence/api seed",
@@ -19,7 +21,7 @@
     "stack:up": "docker compose up -d",
     "stack:down": "docker compose down",
     "stack:logs": "docker compose logs -f localstack",
-    "setup": "pnpm install && pnpm stack:up && pnpm seed",
+    "setup": "node scripts/ensure-env.mjs && pnpm install && pnpm stack:up && pnpm seed",
     "deploy:bootstrap": "pnpm --filter @evidence/infra exec cdk bootstrap",
     "deploy:synth": "pnpm --filter @evidence/web build && pnpm --filter @evidence/infra exec cdk synth",
     "deploy:aws": "pnpm --filter @evidence/web build && pnpm --filter @evidence/infra exec cdk deploy --require-approval never"

@@ -28,6 +28,8 @@ test-results/
 .idea/
 .vscode/*
 !.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
 
 # localstack / cdk
 .localstack/

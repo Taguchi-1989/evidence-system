@@ -1,0 +1,37 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "1. LocalStack 起動",
+      "type": "shell",
+      "command": "pnpm stack:up",
+      "problemMatcher": []
+    },
+    {
+      "label": "2. 初期化(seed)",
+      "type": "shell",
+      "command": "pnpm seed",
+      "problemMatcher": []
+    },
+    {
+      "label": "3. 開発サーバ起動 (API+Web)",
+      "type": "shell",
+      "command": "pnpm dev",
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "セットアップ一括 (env+install+stack+seed)",
+      "type": "shell",
+      "command": "pnpm setup",
+      "problemMatcher": []
+    },
+    {
+      "label": "テスト",
+      "type": "shell",
+      "command": "pnpm -r test",
+      "group": "test",
+      "problemMatcher": []
+    }
+  ]
+}
