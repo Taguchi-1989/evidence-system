@@ -21,6 +21,9 @@ import {
   aws_events_targets as targets,
   aws_apigatewayv2 as apigwv2,
   aws_apigatewayv2_integrations as integrations,
+  aws_cloudfront as cloudfront,
+  aws_cloudfront_origins as origins,
+  aws_s3_deployment as s3deploy,
 } from 'aws-cdk-lib';
 import type { Construct } from 'constructs';
 
@@ -31,6 +34,8 @@ export interface EvidenceStackProps extends StackProps {
 
 const API_ENTRY = path.join(__dirname, '../../../apps/api/src/lambda.ts');
 const AUDIT_ENTRY = path.join(__dirname, '../../../apps/api/src/lambda-audit.ts');
+/** フロント配信用のビルド成果物（`pnpm --filter @evidence/web build` で生成） */
+const WEB_DIST = path.join(__dirname, '../../../apps/web/dist');
 
 export class EvidenceStack extends Stack {
   constructor(scope: Construct, id: string, props: EvidenceStackProps) {
@@ -141,7 +146,38 @@ export class EvidenceStack extends Stack {
       targets: [new targets.LambdaFunction(auditFn)],
     });
 
+    // ── フロント配信（S3 + CloudFront）────────────────────────
+    // SPA を非公開 S3 に置き、CloudFront(OAC) 経由で HTTPS 配信する。
+    // クライアントサイドルーティングのため 403/404 は index.html に返す。
+    const webBucket = new s3.Bucket(this, 'WebBucket', {
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      encryption: s3.BucketEncryption.S3_MANAGED,
+      removalPolicy: RemovalPolicy.DESTROY,
+      autoDeleteObjects: true,
+    });
+
+    const distribution = new cloudfront.Distribution(this, 'WebDist', {
+      defaultRootObject: 'index.html',
+      defaultBehavior: {
+        origin: origins.S3BucketOrigin.withOriginAccessControl(webBucket),
+        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+      },
+      errorResponses: [
+        { httpStatus: 403, responseHttpStatus: 200, responsePagePath: '/index.html' },
+        { httpStatus: 404, responseHttpStatus: 200, responsePagePath: '/index.html' },
+      ],
+    });
+
+    // `pnpm --filter @evidence/web build` 済みの dist を配置し、配信時にキャッシュ無効化。
+    new s3deploy.BucketDeployment(this, 'WebDeploy', {
+      sources: [s3deploy.Source.asset(WEB_DIST)],
+      destinationBucket: webBucket,
+      distribution,
+      distributionPaths: ['/*'],
+    });
+
     // ── 出力 ───────────────────────────────────────────────────
+    new CfnOutput(this, 'WebUrl', { value: `https://${distribution.distributionDomainName}` });
     new CfnOutput(this, 'ApiUrl', { value: httpApi.apiEndpoint });
     new CfnOutput(this, 'TableName', { value: table.tableName });
     new CfnOutput(this, 'BucketName', { value: bucket.bucketName });

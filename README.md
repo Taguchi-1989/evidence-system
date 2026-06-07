@@ -59,3 +59,15 @@ pnpm dev
 
 開発時はモック認証。ログイン画面で利用者とロール（一般入力者 / 上長 / 事務局 / 監査者 /
 システム管理者）を切り替えて、各ロールの見え方を確認できる。本番は Cognito に差替（`AUTH_PROVIDER=cognito`）。
+
+## AWS デプロイ・配信・夜間バッチ
+
+ワンコマンドで AWS に展開できます（要 `aws configure`）。
+
+```bash
+pnpm deploy:bootstrap   # 初回のみ（CDK の土台）
+pnpm deploy:aws         # フロントビルド + CDK deploy（API/DB/S3/CloudFront/監査バッチ）
+```
+
+**仕組みと流れの図解（Mermaid）→ [docs/deployment.md](docs/deployment.md)**
+（AWS 設定バッチ / フロント配信(S3+CloudFront) / 夜間監査バッチ が何をして何ができるようになるか）
