@@ -59,6 +59,11 @@ export function SubmissionFormPage() {
   const { notify } = useToast();
   const qc = useQueryClient();
   const [saving, setSaving] = React.useState(false);
+  // 入力導線：簡易（はじめは軽く）/ 詳細（しっかり）。編集時は詳細を既定に。
+  const [detailed, setDetailed] = React.useState(false);
+  React.useEffect(() => {
+    if (isEdit) setDetailed(true);
+  }, [isEdit]);
 
   const { data: masters } = useQuery({
     queryKey: ['masters', DEFAULT_FISCAL_YEAR],
@@ -167,7 +172,31 @@ export function SubmissionFormPage() {
     <div>
       <PageHeader
         title={isEdit ? '達成内容の編集' : messages.nav.newSubmission}
-        description="影響度と貢献度を分けて記録します。資料があれば添付してください。"
+        description={
+          detailed
+            ? '影響度と貢献度を分けて記録し、説明や資料も添付できます。'
+            : 'まずは要点だけ。後から「詳細入力」で説明や資料を足せます。'
+        }
+        actions={
+          <div className="flex rounded-md border p-0.5">
+            <Button
+              type="button"
+              variant={!detailed ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setDetailed(false)}
+            >
+              かんたん入力
+            </Button>
+            <Button
+              type="button"
+              variant={detailed ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setDetailed(true)}
+            >
+              詳細入力
+            </Button>
+          </div>
+        }
       />
 
       <form className="space-y-6">
@@ -176,18 +205,22 @@ export function SubmissionFormPage() {
             <CardTitle>基本情報</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
-            <Field label={messages.fields.department}>
-              <Select {...register('departmentId')}>
-                {masters?.departments.map((d) => (
-                  <option key={d.departmentId} value={d.departmentId}>
-                    {d.name}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-            <Field label={messages.fields.userName}>
-              <Input {...register('userName')} />
-            </Field>
+            {detailed && (
+              <>
+                <Field label={messages.fields.department}>
+                  <Select {...register('departmentId')}>
+                    {masters?.departments.map((d) => (
+                      <option key={d.departmentId} value={d.departmentId}>
+                        {d.name}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+                <Field label={messages.fields.userName}>
+                  <Input {...register('userName')} />
+                </Field>
+              </>
+            )}
             <div className="sm:col-span-2">
               <Field label={messages.fields.title}>
                 <Input
@@ -230,12 +263,16 @@ export function SubmissionFormPage() {
                 ))}
               </Select>
             </Field>
-            <Field label={messages.fields.impactReason}>
-              <Textarea rows={3} {...register('impactReason')} />
-            </Field>
-            <Field label={messages.fields.contributionReason}>
-              <Textarea rows={3} {...register('contributionReason')} />
-            </Field>
+            {detailed && (
+              <>
+                <Field label={messages.fields.impactReason}>
+                  <Textarea rows={3} {...register('impactReason')} />
+                </Field>
+                <Field label={messages.fields.contributionReason}>
+                  <Textarea rows={3} {...register('contributionReason')} />
+                </Field>
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -261,19 +298,23 @@ export function SubmissionFormPage() {
                 </Field>
               )}
             </div>
-            <Field label={messages.fields.supplementaryComment}>
-              <Textarea rows={2} {...register('supplementaryComment')} />
-            </Field>
+            {detailed && (
+              <>
+                <Field label={messages.fields.supplementaryComment}>
+                  <Textarea rows={2} {...register('supplementaryComment')} />
+                </Field>
 
-            {isEdit && id ? (
-              <div className="border-t pt-4">
-                <h4 className="mb-3 text-sm font-medium">添付資料</h4>
-                <EvidenceManager submissionId={id} editable />
-              </div>
-            ) : (
-              <p className="rounded-md bg-muted/50 p-3 text-xs text-muted-foreground">
-                資料の添付は、下書き保存の後に行えます。
-              </p>
+                {isEdit && id ? (
+                  <div className="border-t pt-4">
+                    <h4 className="mb-3 text-sm font-medium">添付資料</h4>
+                    <EvidenceManager submissionId={id} editable />
+                  </div>
+                ) : (
+                  <p className="rounded-md bg-muted/50 p-3 text-xs text-muted-foreground">
+                    資料の添付は、下書き保存の後（詳細入力）で行えます。
+                  </p>
+                )}
+              </>
             )}
           </CardContent>
         </Card>

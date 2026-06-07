@@ -99,6 +99,10 @@ export function BiDashboardPage() {
                       {label}
                     </span>
                   ))}
+                  <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <span className="inline-block h-3 w-3 rounded-full border border-slate-400 bg-white" />
+                    中心の白点＝証跡あり
+                  </span>
                 </div>
               </>
             )}

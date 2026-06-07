@@ -67,6 +67,8 @@ export interface BubblePoint {
   value: number;
   domainKey: string;
   domainLabel: string;
+  /** 証跡あり（証跡→JSON→BI の流れを可視化） */
+  hasEvidence: boolean;
   detail: string;
 }
 
@@ -113,7 +115,8 @@ export function toBubble(s: Submission, deptName: (id: string) => string): Bubbl
     value: businessValue(s),
     domainKey: domainOf(s),
     domainLabel: deptName(domainOf(s)),
-    detail: `${s.userName} ・ 事業価値=${businessValue(s)}`,
+    hasEvidence: s.hasEvidence,
+    detail: `${s.userName} ・ 事業価値=${businessValue(s)} ・ 証跡${s.hasEvidence ? 'あり' : 'なし'}`,
   };
 }
 

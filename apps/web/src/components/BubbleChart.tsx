@@ -106,6 +106,10 @@ export function BubbleChart({
             >
               <title>{`${p.label}\n${p.domainLabel}\n必要経費=${xAxis.format(p.xValue)} / 展開性=${yAxis.format(p.yValue)} / 事業価値=${p.value}\n${p.detail}`}</title>
             </circle>
+            {/* 中心の白点＝証跡あり（証跡→JSON→BI の可視化） */}
+            {p.hasEvidence && (
+              <circle cx={sx(p.xValue)} cy={sy(p.yValue)} r={3} fill="#ffffff" stroke={c} strokeWidth={1} />
+            )}
             <text x={sx(p.xValue)} y={sy(p.yValue) - r - 3} fontSize="9" textAnchor="middle" fill="hsl(222 47% 31%)">
               {p.label.length > 14 ? p.label.slice(0, 13) + '…' : p.label}
             </text>
