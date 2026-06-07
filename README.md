@@ -1,0 +1,61 @@
+# 成果・証跡管理システム (Evidence System)
+
+期末・年度末の評価で、達成内容・影響度・貢献度・証跡資料を後から振り返れる形で
+収集・整理する社内向け Web システム。要件定義は [`youkenteigi.md`](./youkenteigi.md)。
+
+> **設計思想**: UIはMVP（利用者には軽く） / 内部は本番相当 / 段階的に要求水準を上げる /
+> データは最初から移行可能。詳細はプランファイル参照。
+
+## 構成（モノレポ / pnpm workspaces）
+
+| パッケージ | 役割 |
+| --- | --- |
+| `packages/shared` | 型・Zodスキーマ・enum・ポリシー既定値・JSONエクスポート型（フロント/バック共有） |
+| `apps/api` | Hono バックエンド（Lambda 互換）+ 監査Agent + ローカル起動 + seed |
+| `apps/web` | React + Vite SPA |
+| `packages/infra` | AWS CDK スタック雛形（後続：実デプロイ用） |
+
+ストレージは **DynamoDB 単一テーブル** + **S3**。ローカルは LocalStack で AWS 互換 API を提供し、
+本番へは endpoint 設定の差替と CDK デプロイで移行できる。
+
+## クイックスタート
+
+前提: Node.js 20+ / pnpm 10+ / Docker（Compose v2）
+
+```bash
+# 1) 依存インストール
+pnpm install
+
+# 2) 環境変数を用意
+cp .env.example .env
+
+# 3) LocalStack 起動（S3 + DynamoDB）
+pnpm stack:up
+
+# 4) テーブル/バケット作成・マスタ/デモデータ投入
+pnpm seed
+
+# 5) API + フロントを並行起動
+pnpm dev
+#   API:  http://localhost:8787
+#   Web:  http://localhost:5173
+```
+
+ワンショット: `pnpm setup`（install → stack:up → seed）。
+
+## よく使うスクリプト（ルート）
+
+| コマンド | 内容 |
+| --- | --- |
+| `pnpm dev` | api + web を並行起動 |
+| `pnpm seed` | DynamoDB/S3 初期化 + マスタ/デモ投入 |
+| `pnpm audit:run` | 監査Agent を手動実行 |
+| `pnpm test` | 全パッケージの Vitest |
+| `pnpm e2e` | Playwright e2e |
+| `pnpm typecheck` / `pnpm lint` | 型チェック / Lint |
+| `pnpm stack:up` / `pnpm stack:down` | LocalStack 起動 / 停止 |
+
+## モックログイン
+
+開発時はモック認証。ログイン画面で利用者とロール（一般入力者 / 上長 / 事務局 / 監査者 /
+システム管理者）を切り替えて、各ロールの見え方を確認できる。本番は Cognito に差替（`AUTH_PROVIDER=cognito`）。

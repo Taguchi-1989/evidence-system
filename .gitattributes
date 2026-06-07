@@ -1,0 +1,6 @@
+# 行末は LF に正規化（Windows/macOS/Linux 混在対策）
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.gif binary
+*.webp binary

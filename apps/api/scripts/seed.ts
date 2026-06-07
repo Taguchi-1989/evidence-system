@@ -1,0 +1,186 @@
+/**
+ * 初期化スクリプト：テーブル/バケット作成 → マスタ・ユーザー・ポリシー・デモ提出を投入。
+ * `pnpm seed` で実行。冪等（再実行可）。
+ */
+import { PutObjectCommand } from '@aws-sdk/client-s3';
+import type { AuthUser, Department, Submission, EvidenceFile } from '@evidence/shared';
+import { defaultPolicyConfig } from '@evidence/shared';
+import { createTableIfNotExists } from '../src/db/admin.js';
+import { createBucketIfNotExists } from '../src/s3/admin.js';
+import { s3, BUCKET } from '../src/s3/client.js';
+import { evidenceS3Key } from '../src/s3/keys.js';
+import { putUser } from '../src/repositories/users.js';
+import { putDepartment } from '../src/repositories/departments.js';
+import { savePolicyConfig } from '../src/repositories/config.js';
+import { saveSubmission } from '../src/repositories/submissions.js';
+import { saveEvidence } from '../src/repositories/evidence.js';
+import { nowIso } from '../src/lib/util.js';
+
+const FY = '2026';
+
+const departments: Department[] = [
+  { departmentId: 'dept-100', name: '本部', parentDepartmentId: null },
+  { departmentId: 'dept-001', name: '営業部', parentDepartmentId: 'dept-100' },
+  { departmentId: 'dept-002', name: '開発部', parentDepartmentId: 'dept-100' },
+  { departmentId: 'dept-003', name: '管理部', parentDepartmentId: 'dept-100' },
+];
+
+const users: AuthUser[] = [
+  { userId: 'user-001', name: '田中 太郎', role: 'contributor', departmentId: 'dept-002', managedDepartmentIds: [] },
+  { userId: 'user-002', name: '佐藤 花子', role: 'contributor', departmentId: 'dept-001', managedDepartmentIds: [] },
+  { userId: 'user-003', name: '鈴木 一郎', role: 'manager', departmentId: 'dept-002', managedDepartmentIds: ['dept-002'] },
+  { userId: 'user-004', name: '高橋 部長', role: 'manager', departmentId: 'dept-100', managedDepartmentIds: ['dept-100', 'dept-001', 'dept-002', 'dept-003'] },
+  { userId: 'user-005', name: '事務局 担当', role: 'office', departmentId: 'dept-003', managedDepartmentIds: [] },
+  { userId: 'user-006', name: '監査 太郎', role: 'auditor', departmentId: 'dept-003', managedDepartmentIds: [] },
+  { userId: 'user-007', name: 'システム 管理者', role: 'admin', departmentId: 'dept-003', managedDepartmentIds: [] },
+];
+
+function baseSubmission(over: Partial<Submission> & Pick<Submission, 'submissionId' | 'userId' | 'departmentId' | 'userName' | 'title'>): Submission {
+  const ts = nowIso();
+  return {
+    fiscalYear: FY,
+    achievementText: '',
+    impactLevelSelf: null,
+    impactReason: '',
+    contributionLevelSelf: null,
+    contributionReason: '',
+    evidencePresence: 'NONE',
+    hasEvidence: false,
+    noEvidenceReason: '',
+    supplementaryComment: '',
+    status: 'draft',
+    reviewComment: '',
+    createdAt: ts,
+    updatedAt: ts,
+    submittedAt: null,
+    approvedAt: null,
+    approverId: null,
+    deletedAt: null,
+    ...over,
+  };
+}
+
+async function seedDemoSubmissions(): Promise<void> {
+  // 1) 証跡あり・提出済み（ダミーCSVをS3に格納し、ダウンロード/監査をデモ可能に）
+  const sub1 = baseSubmission({
+    submissionId: 'sub-001',
+    userId: 'user-001',
+    departmentId: 'dept-002',
+    userName: '田中 太郎',
+    title: '月次集計作業の自動化',
+    achievementText: '月次集計作業をスクリプト化し、作業時間を約8時間/月削減した。',
+    impactLevelSelf: 3,
+    impactReason: '部署内の月次作業に適用されたため',
+    contributionLevelSelf: 4,
+    contributionReason: '要件整理から実装、運用説明まで担当したため',
+    evidencePresence: 'AVAILABLE',
+    hasEvidence: true,
+    status: 'submitted',
+    submittedAt: nowIso(),
+  });
+  await saveSubmission(sub1);
+
+  const ev1: EvidenceFile = {
+    evidenceId: 'ev-001',
+    submissionId: 'sub-001',
+    fiscalYear: FY,
+    s3Bucket: BUCKET,
+    s3Key: evidenceS3Key({
+      fiscalYear: FY,
+      departmentId: 'dept-002',
+      userId: 'user-001',
+      submissionId: 'sub-001',
+      evidenceId: 'ev-001',
+      originalFileName: 'before_after.csv',
+    }),
+    originalFileName: 'before_after.csv',
+    contentType: 'text/csv',
+    fileSize: 0,
+    checksum: null,
+    evidenceType: 'EXCEL_SUMMARY',
+    relatedAxis: 'IMPACT',
+    description: '改善前後の作業時間を比較した資料',
+    uploadedBy: 'user-001',
+    uploadedAt: nowIso(),
+    isConfidential: false,
+    storageStatus: 'uploaded',
+    deletedAt: null,
+  };
+  const csv = '工程,改善前(分),改善後(分)\n月次集計,480,15\nレビュー,60,30\n';
+  await s3.send(
+    new PutObjectCommand({ Bucket: BUCKET, Key: ev1.s3Key, Body: csv, ContentType: 'text/csv' }),
+  );
+  await saveEvidence({ ...ev1, fileSize: Buffer.byteLength(csv) });
+
+  // 2) 機密のため未添付・提出済み（ファイルなし、理由あり）
+  await saveSubmission(
+    baseSubmission({
+      submissionId: 'sub-002',
+      userId: 'user-002',
+      departmentId: 'dept-001',
+      userName: '佐藤 花子',
+      title: '大口顧客向け提案の獲得',
+      achievementText: '新規大口顧客との契約を獲得した。',
+      impactLevelSelf: 5,
+      impactReason: '全社売上に寄与したため',
+      contributionLevelSelf: 3,
+      contributionReason: '提案チームの主要担当として参画',
+      evidencePresence: 'CONFIDENTIAL',
+      hasEvidence: false,
+      noEvidenceReason: '契約金額を含むため社外秘。所在は営業部共有フォルダ。',
+      status: 'submitted',
+      submittedAt: nowIso(),
+    }),
+  );
+
+  // 3) 下書き（未提出）
+  await saveSubmission(
+    baseSubmission({
+      submissionId: 'sub-003',
+      userId: 'user-001',
+      departmentId: 'dept-002',
+      userName: '田中 太郎',
+      title: '社内ドキュメント整備',
+      achievementText: '開発部の手順書を再整備中。',
+      impactLevelSelf: 2,
+      impactReason: '',
+      contributionLevelSelf: 4,
+      contributionReason: '',
+      evidencePresence: 'PREPARING',
+      status: 'draft',
+    }),
+  );
+}
+
+async function main(): Promise<void> {
+  console.log('[seed] テーブル作成...');
+  const createdTable = await createTableIfNotExists();
+  console.log(createdTable ? '  → 作成しました' : '  → 既存');
+
+  console.log('[seed] バケット作成 + CORS...');
+  const createdBucket = await createBucketIfNotExists();
+  console.log(createdBucket ? '  → 作成しました' : '  → 既存（CORS再適用）');
+
+  // テーブルがアクティブになるまで少し待つ（LocalStack は即時のことが多い）
+  await new Promise((r) => setTimeout(r, 1000));
+
+  console.log('[seed] 部署マスタ...');
+  for (const d of departments) await putDepartment(FY, d);
+
+  console.log('[seed] ユーザー...');
+  for (const u of users) await putUser(u);
+
+  console.log('[seed] ポリシー設定（MVP既定）...');
+  await savePolicyConfig(defaultPolicyConfig(FY));
+
+  console.log('[seed] デモ提出...');
+  await seedDemoSubmissions();
+
+  console.log('[seed] 完了 ✅');
+  console.log(`  年度: ${FY} / ユーザー ${users.length} 名 / 部署 ${departments.length} / 提出 3件`);
+}
+
+main().catch((e) => {
+  console.error('[seed] 失敗:', e);
+  process.exit(1);
+});

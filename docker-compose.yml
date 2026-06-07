@@ -1,0 +1,21 @@
+# LocalStack: S3 + DynamoDB をローカルで提供（AWS 互換 API）。
+# 本番では同じコードが endpoint 設定の差替だけで AWS に向く（プラン「移植性の原則」）。
+services:
+  localstack:
+    image: localstack/localstack:3.8
+    container_name: evidence-localstack
+    ports:
+      - "4566:4566" # LocalStack エッジゲートウェイ（全サービス共通）
+    environment:
+      - SERVICES=s3,dynamodb
+      - DEBUG=0
+      - AWS_DEFAULT_REGION=ap-northeast-1
+      - DISABLE_CORS_CHECKS=1
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:4566/_localstack/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
