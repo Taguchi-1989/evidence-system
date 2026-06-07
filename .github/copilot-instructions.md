@@ -57,8 +57,9 @@ pnpm dev        # API:8787 + Web:5173
 
 ## 変更時のチェック
 
-- 型: `pnpm -r typecheck`
-- テスト: `pnpm -r test`（Vitest）/ e2e: `pnpm e2e`（Playwright, dev サーバ起動済みで）
+- **まず `pnpm verify`**（型チェック→ユニット→ローカル統合E2E、Docker不要・GitHub Actions不要）。
+  実体は [`apps/api/scripts/verify-local.ts`](../apps/api/scripts/verify-local.ts)（local モードで in-process 検証）。
+- 個別: 型 `pnpm -r typecheck` / 単体 `pnpm -r test` / ブラウザ e2e `pnpm e2e`（dev 起動中）。
 - 機密情報をコミットしない（`.env` は gitignore 済み。鍵やトークンを直書きしない）。
 
 ## やってはいけないこと

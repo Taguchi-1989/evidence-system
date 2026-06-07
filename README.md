@@ -90,12 +90,16 @@ Copilot Chat がこのプロジェクトの構成・規約（共有Zod / 単一�
 | コマンド | 内容 |
 | --- | --- |
 | `pnpm dev` | api + web を並行起動 |
-| `pnpm seed` | DynamoDB/S3 初期化 + マスタ/デモ投入 |
-| `pnpm audit:run` | 監査Agent を手動実行 |
+| `pnpm setup` / `pnpm setup:local` | 状態判定セットアップ（aws / Docker不要のlocal） |
+| `pnpm doctor` | 前提・起動状態を点検 |
+| **`pnpm verify`** | **ローカル自動テスト一括**：型チェック→ユニット→統合E2E（Docker不要） |
 | `pnpm test` | 全パッケージの Vitest |
-| `pnpm e2e` | Playwright e2e |
-| `pnpm typecheck` / `pnpm lint` | 型チェック / Lint |
-| `pnpm stack:up` / `pnpm stack:down` | LocalStack 起動 / 停止 |
+| `pnpm test:e2e:local` | ローカル統合E2E（local モードで in-process 実行・Docker不要） |
+| `pnpm e2e` | Playwright e2e（ブラウザ。dev 起動中に実行） |
+| `pnpm seed` / `pnpm audit:run` | 初期化 / 監査Agent 手動実行 |
+| `pnpm stack:up` / `pnpm stack:down` | LocalStack 起動 / 停止（aws モード時） |
+
+> CI（GitHub Actions）は現状未使用。検証は手元で `pnpm verify` を実行する運用です（Docker も不要）。
 
 ## モックログイン
 
