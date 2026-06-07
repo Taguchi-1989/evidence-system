@@ -54,6 +54,11 @@ pnpm setup    # .env 自動生成 → 依存 → LocalStack 起動 → seed
 pnpm dev      # http://localhost:5173 を開く
 ```
 
+> **Docker は Docker Desktop なし・無償で使えます**（WSL2 + Docker Engine）。
+> セットアップは管理者 PowerShell で `.\scripts\setup-docker-wsl.ps1`。
+> 詳細・コスト/ライセンス・代替案 → **[docs/docker-without-desktop.md](docs/docker-without-desktop.md)**。
+> ローカルに Docker を入れたくない場合は **GitHub Codespaces**（devcontainer 同梱）が最短です。
+
 - `.env` は自動生成されます（`scripts/ensure-env.mjs`）。LocalStack 用のダミー値のみで、秘密情報は不要。
 - VS Code で開くと**推奨拡張**（[.vscode/extensions.json](.vscode/extensions.json)）と
   **ワンクリックのタスク**（[.vscode/tasks.json](.vscode/tasks.json): LocalStack起動 / seed / dev）が使えます。
