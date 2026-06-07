@@ -1,7 +1,9 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/auth/AuthContext';
 import { ROLE_LABELS } from '@evidence/shared';
 import { messages } from '@/i18n/messages';
+import { endpoints } from '@/lib/endpoints';
 import { navItemsForRole } from '@/components/nav';
 import { RoleSwitcher } from '@/components/RoleSwitcher';
 import { Button } from '@/components/ui/button';
@@ -10,8 +12,14 @@ import { cn } from '@/lib/utils';
 export function Layout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { data: appInfo } = useQuery({
+    queryKey: ['app-info'],
+    queryFn: () => endpoints.appInfo(),
+    staleTime: Infinity,
+  });
   if (!user) return null;
   const items = navItemsForRole(user.role);
+  const isMockAuth = appInfo?.authProvider === 'mock';
 
   return (
     <div className="min-h-screen">
@@ -41,6 +49,12 @@ export function Layout() {
           </div>
         </div>
       </header>
+
+      {isMockAuth && (
+        <div className="border-b border-amber-300 bg-amber-50 px-4 py-2 text-center text-xs text-amber-800">
+          {messages.mock.banner}
+        </div>
+      )}
 
       <div className="mx-auto flex max-w-6xl gap-6 px-4 py-6">
         <nav className="w-48 shrink-0">

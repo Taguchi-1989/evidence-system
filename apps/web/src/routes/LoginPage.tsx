@@ -9,6 +9,7 @@ import { useAuth } from '@/auth/AuthContext';
 import { useToast } from '@/components/ui/toast';
 import { messages } from '@/i18n/messages';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Loading } from '@/components/ui/loading';
 import { Button } from '@/components/ui/button';
 
 export function LoginPage() {
@@ -57,7 +58,11 @@ export function LoginPage() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <p className="text-sm text-muted-foreground">読み込み中...</p>
+            <Loading />
+          ) : (users?.length ?? 0) === 0 ? (
+            <div className="rounded-md border border-amber-300 bg-amber-50 p-4 text-sm text-amber-800">
+              {messages.setup.notSeeded}
+            </div>
           ) : (
             <ul className="grid gap-2 sm:grid-cols-2">
               {users?.map((u) => (

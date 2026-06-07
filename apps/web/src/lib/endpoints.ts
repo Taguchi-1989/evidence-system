@@ -36,7 +36,15 @@ const qs = (params: Record<string, string | undefined>) => {
   return s ? `?${s}` : '';
 };
 
+export interface AppInfo {
+  authProvider: 'mock' | 'cognito';
+  storageDriver: 'aws' | 'local';
+}
+
 export const endpoints = {
+  // アプリ実行情報（認証不要）
+  appInfo: () => apiFetch<AppInfo>('/config/app', { noAuth: true }),
+
   // 設定・マスタ
   masters: (fiscalYear: string) =>
     apiFetch<MastersResponse>(`/masters${qs({ fiscalYear })}`),

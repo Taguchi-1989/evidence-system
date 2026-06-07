@@ -5,7 +5,10 @@ import {
   UpdateSubmissionSchema,
   ReviewActionSchema,
   type Submission,
+  type ReviewEntry,
+  type ReviewActionKind,
 } from '@evidence/shared';
+import type { AuthUser } from '@evidence/shared';
 import type { AppEnv } from '../types.js';
 import { parseBody, notFound, conflict, policyBlocked } from '../lib/http.js';
 import { requireAuth } from '../middleware/auth.js';
@@ -34,6 +37,26 @@ function dedupeById(items: Submission[]): Submission[] {
   const map = new Map<string, Submission>();
   for (const s of items) map.set(s.submissionId, s);
   return [...map.values()];
+}
+
+/** 確認操作（承認/差戻し/コメント）を履歴に追記し、最新コメントを反映する。 */
+function appendReview(
+  s: Submission,
+  user: AuthUser,
+  action: ReviewActionKind,
+  comment: string,
+  at: string,
+): void {
+  const entry: ReviewEntry = {
+    actorId: user.userId,
+    actorName: user.name,
+    actorRole: user.role,
+    action,
+    comment,
+    at,
+  };
+  s.reviewHistory = [...(s.reviewHistory ?? []), entry];
+  s.reviewComment = comment;
 }
 
 /** 一覧（scope=me|department|all をロールで丸める） */
@@ -74,7 +97,8 @@ submissionsRouter.post('/submissions', requireAuth, async (c) => {
     submissionId: id('sub'),
     fiscalYear: input.fiscalYear,
     userId: user.userId,
-    departmentId: input.departmentId ?? user.departmentId,
+    // 部署は本人の所属に固定（他部署への付け替えを防止：集計・上長確認の整合性のため）
+    departmentId: user.departmentId,
     userName: input.userName ?? user.name,
     title: input.title ?? '',
     achievementText: input.achievementText ?? '',
@@ -130,6 +154,8 @@ submissionsRouter.put('/submissions/:id', requireAuth, async (c) => {
   if (input.evidencePresence !== undefined) {
     merged.hasEvidence = input.evidencePresence === 'AVAILABLE';
   }
+  // 部署は作成時の所属から変更不可（付け替え防止）
+  merged.departmentId = s.departmentId;
   merged.updatedAt = nowIso();
   await saveSubmission(merged);
   await logActivity(c, {
@@ -180,11 +206,12 @@ submissionsRouter.post('/submissions/:id/approve', requireAuth, async (c) => {
 
   const input = await parseBody(c, ReviewActionSchema);
   const before = s.status;
+  const now = nowIso();
   s.status = 'approved';
-  s.approvedAt = nowIso();
+  s.approvedAt = now;
   s.approverId = user.userId;
-  s.reviewComment = input.comment ?? '';
-  s.updatedAt = s.approvedAt;
+  appendReview(s, user, 'approve', input.comment ?? '', now);
+  s.updatedAt = now;
   await saveSubmission(s);
   await logActivity(c, {
     fiscalYear: s.fiscalYear,
@@ -207,9 +234,10 @@ submissionsRouter.post('/submissions/:id/reject', requireAuth, async (c) => {
 
   const input = await parseBody(c, ReviewActionSchema);
   const before = s.status;
+  const now = nowIso();
   s.status = 'returned';
-  s.reviewComment = input.comment ?? '';
-  s.updatedAt = nowIso();
+  appendReview(s, user, 'reject', input.comment ?? '', now);
+  s.updatedAt = now;
   await saveSubmission(s);
   await logActivity(c, {
     fiscalYear: s.fiscalYear,
@@ -230,8 +258,9 @@ submissionsRouter.post('/submissions/:id/comment', requireAuth, async (c) => {
   assertCanReview(user, s);
 
   const input = await parseBody(c, ReviewActionSchema);
-  s.reviewComment = input.comment ?? '';
-  s.updatedAt = nowIso();
+  const now = nowIso();
+  appendReview(s, user, 'comment', input.comment ?? '', now);
+  s.updatedAt = now;
   await saveSubmission(s);
   await logActivity(c, {
     fiscalYear: s.fiscalYear,

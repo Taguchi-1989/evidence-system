@@ -10,6 +10,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { Loading } from '@/components/ui/loading';
 import { Table, THead, TBody, TR, TH, TD } from '@/components/ui/table';
 import { EVIDENCE_PRESENCE_LABELS, IMPACT_LEVEL_LABELS, CONTRIBUTION_LEVEL_LABELS } from '@evidence/shared';
 
@@ -36,7 +37,7 @@ export function DashboardPage() {
       <Card>
         <CardContent className="p-0">
           {isLoading ? (
-            <p className="p-5 text-sm text-muted-foreground">読み込み中...</p>
+            <Loading />
           ) : items.length === 0 ? (
             <div className="p-8 text-center text-sm text-muted-foreground">
               まだ提出はありません。「{messages.nav.newSubmission}」から記録を始めましょう。
@@ -56,7 +57,7 @@ export function DashboardPage() {
               <TBody>
                 {items.map((s) => (
                   <TR key={s.submissionId}>
-                    <TD className="font-medium">{s.title || '(無題)'}</TD>
+                    <TD className="font-medium">{s.title || messages.common.untitled}</TD>
                     <TD>{s.impactLevelSelf ? IMPACT_LEVEL_LABELS[s.impactLevelSelf] : '—'}</TD>
                     <TD>
                       {s.contributionLevelSelf
@@ -71,7 +72,7 @@ export function DashboardPage() {
                       <div className="flex justify-end gap-2">
                         <Link to={`/submissions/${s.submissionId}`}>
                           <Button variant="ghost" size="sm">
-                            詳細
+                            {messages.common.detail}
                           </Button>
                         </Link>
                         {(s.status === 'draft' || s.status === 'returned') && (

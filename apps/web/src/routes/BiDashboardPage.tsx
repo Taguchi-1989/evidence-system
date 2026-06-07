@@ -11,6 +11,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { BubbleChart } from '@/components/BubbleChart';
 import { BubbleDetail } from '@/components/BubbleDetail';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Loading } from '@/components/ui/loading';
 import { AXIS, DOMAIN_PALETTE, QUADRANTS, toBubble } from '@/routes/bi/bi-config';
 
 export function BiDashboardPage() {
@@ -74,7 +75,7 @@ export function BiDashboardPage() {
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <p className="text-sm text-muted-foreground">読み込み中...</p>
+              <Loading />
             ) : points.length === 0 ? (
               <p className="p-8 text-center text-sm text-muted-foreground">対象データがありません。</p>
             ) : (

@@ -45,6 +45,11 @@ pnpm dev
 `.env`/依存/Docker/LocalStack/seed のうち**足りない所だけ**を実行します（何度実行してもOK）。
 現在の状態は `pnpm doctor` で点検できます（各項目を ✓/✗ で表示し、次にやることを案内）。
 
+> ⚠️ **初回は必ず `pnpm setup`（または `pnpm setup:local`）を実行してください。**
+> `pnpm install` の後に `pnpm dev` だけを起動すると、テーブル/初期データ（seed）が無いため
+> ログイン候補が出ない・一覧が空、という状態になります。ログイン画面にもこの案内を表示します。
+> （`.env` は `pnpm dev` 時に自動生成されるので、`cp .env.example .env` の手動実行は不要です。）
+
 ## 会社の環境に持ち込んで動かす（最小手順）
 
 前提: VS Code + Node 20+ / pnpm / Docker。
@@ -67,6 +72,12 @@ pnpm dev
 `pnpm setup:local` は **Docker も LocalStack も不要**。DynamoDB/S3 の代わりにローカルファイル
 （`apps/api/.localdata/`）を使い、フロント無改変で全機能が動きます。本番/LocalStack に戻すのは
 `node scripts/set-driver.mjs aws`。
+
+> local モードの注意点（証跡の添付/ダウンロード）:
+> - アップロード用URLは **API プロセス起動ごとの鍵で署名**するため、**API を再起動すると発行済みURLは失効**します。
+>   アップロード/ダウンロードが 403 になったらブラウザを再読込してやり直してください。
+> - URL は `http://localhost:<API_PORT>` を指すため、**別PC・別ホスト・Codespaces 等の遠隔アクセスでは添付が届きません**
+>   （遠隔で使う場合は `aws` モード＋S3 を利用してください）。
 
 その他の選択肢:
 - **Docker Desktop なし・無償**で Docker を使う（WSL2 + Docker Engine）→ `.\scripts\setup-docker-wsl.ps1`

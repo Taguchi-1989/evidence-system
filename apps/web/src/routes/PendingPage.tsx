@@ -2,9 +2,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { endpoints } from '@/lib/endpoints';
 import { DEFAULT_FISCAL_YEAR } from '@/lib/constants';
+import { messages } from '@/i18n/messages';
 import { PageHeader } from '@/components/PageHeader';
 import { SubmissionTable } from '@/components/SubmissionTable';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Loading } from '@/components/ui/loading';
 import { Table, THead, TBody, TR, TH, TD } from '@/components/ui/table';
 
 export function PendingPage() {
@@ -15,10 +17,10 @@ export function PendingPage() {
 
   return (
     <div>
-      <PageHeader title="未提出・要確認" description="督促・確認の対象を抽出します。" />
+      <PageHeader title={messages.pages.pendingTitle} description={messages.pages.pendingDescription} />
 
       {isLoading || !data ? (
-        <p className="text-sm text-muted-foreground">読み込み中...</p>
+        <Loading />
       ) : (
         <div className="space-y-6">
           <Card>

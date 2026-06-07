@@ -102,7 +102,7 @@ export function MastersPage() {
 
   return (
     <div>
-      <PageHeader title="マスタ管理" description="運用モード・ポリシー設定と部署マスタを管理します。" />
+      <PageHeader title={messages.pages.mastersTitle} description={messages.pages.mastersDescription} />
 
       <Card className="mb-6">
         <CardHeader>

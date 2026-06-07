@@ -1,10 +1,11 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '@/auth/AuthContext';
+import { Loading } from '@/components/ui/loading';
 
 export function ProtectedRoute() {
   const { user, loading } = useAuth();
   if (loading) {
-    return <div className="flex h-screen items-center justify-center text-muted-foreground">読み込み中...</div>;
+    return <Loading className="h-screen" />;
   }
   if (!user) return <Navigate to="/login" replace />;
   return <Outlet />;

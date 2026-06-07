@@ -5,6 +5,7 @@ import { endpoints, type ImportResult } from '@/lib/endpoints';
 import { putToPresignedUrl } from '@/lib/api';
 import { DEFAULT_FISCAL_YEAR } from '@/lib/constants';
 import { useToast } from '@/components/ui/toast';
+import { messages } from '@/i18n/messages';
 import { PageHeader } from '@/components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -65,8 +66,8 @@ export function ImportPage() {
   return (
     <div>
       <PageHeader
-        title="一括取込（Excel / CSV）"
-        description="過去の成果などをまとめて登録します。まず検証（ドライラン）→ 問題なければ取込実行。"
+        title={messages.pages.importTitle}
+        description={messages.pages.importDescription}
         actions={
           <Button variant="outline" size="sm" onClick={downloadTemplate}>
             テンプレート(CSV)

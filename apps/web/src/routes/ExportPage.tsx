@@ -7,6 +7,7 @@ import { useToast } from '@/components/ui/toast';
 import { messages } from '@/i18n/messages';
 import { PageHeader } from '@/components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Loading } from '@/components/ui/loading';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, THead, TBody, TR, TH, TD } from '@/components/ui/table';
@@ -46,8 +47,8 @@ export function ExportPage() {
   return (
     <div>
       <PageHeader
-        title="エクスポート"
-        description="他システムへの移行・連携用に CSV / JSON を出力します。"
+        title={messages.pages.exportTitle}
+        description={messages.pages.exportDescription}
         actions={
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => void create('csv')} disabled={busy}>
@@ -66,7 +67,7 @@ export function ExportPage() {
         </CardHeader>
         <CardContent className="p-0">
           {isLoading ? (
-            <p className="p-5 text-sm text-muted-foreground">読み込み中...</p>
+            <Loading />
           ) : (data?.items.length ?? 0) === 0 ? (
             <p className="p-8 text-center text-sm text-muted-foreground">
               まだエクスポートはありません。

@@ -56,6 +56,21 @@ export const ReviewActionSchema = z.object({
 });
 export type ReviewActionInput = z.infer<typeof ReviewActionSchema>;
 
+/** 確認操作の種別（承認/差戻し/コメント） */
+export const ReviewActionKindEnum = z.enum(['approve', 'reject', 'comment']);
+export type ReviewActionKind = z.infer<typeof ReviewActionKindEnum>;
+
+/** 確認履歴の1件（誰が・いつ・何を・コメント）。上書きせず追記する。 */
+export const ReviewEntrySchema = z.object({
+  actorId: z.string(),
+  actorName: z.string(),
+  actorRole: z.string(),
+  action: ReviewActionKindEnum,
+  comment: z.string(),
+  at: z.string(),
+});
+export type ReviewEntry = z.infer<typeof ReviewEntrySchema>;
+
 /** 永続化される提出エンティティ（§12.2） */
 export const SubmissionSchema = z.object({
   submissionId: z.string(),
@@ -75,8 +90,10 @@ export const SubmissionSchema = z.object({
   noEvidenceReason: z.string(),
   supplementaryComment: z.string(),
   status: SubmissionStatusEnum,
-  /** 承認/差戻しコメント履歴（簡易） */
+  /** 最新の確認コメント（一覧/サマリ表示用。詳細は reviewHistory を参照） */
   reviewComment: z.string().default(''),
+  /** 確認操作の履歴（承認/差戻し/コメントを追記。未設定の旧データは空扱い） */
+  reviewHistory: z.array(ReviewEntrySchema).optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
   submittedAt: z.string().nullable(),

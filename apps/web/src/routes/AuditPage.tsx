@@ -9,6 +9,7 @@ import { messages } from '@/i18n/messages';
 import { auditLabel, auditVariant } from '@/lib/labels';
 import { PageHeader } from '@/components/PageHeader';
 import { Card, CardContent } from '@/components/ui/card';
+import { Loading } from '@/components/ui/loading';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, THead, TBody, TR, TH, TD } from '@/components/ui/table';
@@ -45,8 +46,8 @@ export function AuditPage() {
   return (
     <div>
       <PageHeader
-        title="監査結果"
-        description="夜間監査Agentの一次チェック結果（参考情報）。最終評価ではありません。"
+        title={messages.pages.auditTitle}
+        description={messages.pages.auditDescription}
         actions={
           canRun ? (
             <Button onClick={() => void handleRun()} disabled={running}>
@@ -67,7 +68,7 @@ export function AuditPage() {
       <Card>
         <CardContent className="p-0">
           {isLoading ? (
-            <p className="p-5 text-sm text-muted-foreground">読み込み中...</p>
+            <Loading />
           ) : items.length === 0 ? (
             <p className="p-8 text-center text-sm text-muted-foreground">
               監査結果はまだありません。「{messages.actions.runAudit}」で実行できます。
