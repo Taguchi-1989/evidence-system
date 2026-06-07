@@ -52,6 +52,10 @@ export function getObjectBuffer(key: string): Buffer | null {
   }
 }
 
+export async function getObjectBytes(key: string): Promise<Uint8Array | null> {
+  return getObjectBuffer(key);
+}
+
 export async function objectExists(key: string): Promise<boolean> {
   try {
     return existsSync(safePath(key));

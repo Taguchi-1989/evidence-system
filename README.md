@@ -125,3 +125,11 @@ pnpm deploy:aws         # フロントビルド + CDK deploy（API/DB/S3/CloudFr
 
 **構成の選び方（コスト×利用者規模の比較表）→ [docs/aws-architecture-comparison.md](docs/aws-architecture-comparison.md)**
 （EC2 / S3 / DynamoDB / Aurora などの組み合わせ別コスト概算と、規模ごとの最適解）
+
+## 外部連携・拡張
+
+- **API（外部Agent / 他システム）** → **[docs/api.md](docs/api.md)**。`AGENT_API_KEYS` の APIキーを
+  `Authorization: Bearer` で M2M 認証でき、提出取得・監査実行・JSONエクスポートまで叩けます。
+- **証跡の抽出**: CSV/テキストに加え **XLSX**（exceljs）をサーバ側で抽出し監査に利用。
+- **監査の LLM**: `AUDIT_LLM_PROVIDER=none|anthropic|azure-openai`（**Azure OpenAI 連携**口あり。未設定でも構造チェックで動作）。
+- **Copilot 拡張プロンプト**: [.github/prompts](.github/prompts)（項目追加 / 抽出器 / LLM / エンドポイント / Excel一括取込）。

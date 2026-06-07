@@ -13,7 +13,7 @@ import { listEvidence } from '../repositories/evidence.js';
 import { saveAuditResult } from '../repositories/audit.js';
 import { extractEvidence, type ExtractResult } from './extract.js';
 import { checkTypeConsistency } from './consistency.js';
-import { scoreWithLLM, llmEnabled } from './llm.js';
+import { scoreWithLLM, llmEnabled, llmModelName } from './llm.js';
 import { id, nowIso } from '../lib/util.js';
 
 interface RunOptions {
@@ -21,7 +21,7 @@ interface RunOptions {
   submissionId?: string;
 }
 
-const MODEL_NAME = () => (llmEnabled() ? 'claude-haiku-4-5' : 'heuristic-v2');
+const MODEL_NAME = () => llmModelName();
 
 export async function runAudit(opts: RunOptions): Promise<AuditRunSummary> {
   const startedAt = nowIso();

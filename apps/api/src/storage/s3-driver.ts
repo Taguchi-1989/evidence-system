@@ -25,3 +25,12 @@ export async function getObjectText(key: string): Promise<string | null> {
     return null;
   }
 }
+
+export async function getObjectBytes(key: string): Promise<Uint8Array | null> {
+  try {
+    const res = await s3.send(new GetObjectCommand({ Bucket: BUCKET, Key: key }));
+    return res.Body ? await res.Body.transformToByteArray() : null;
+  } catch {
+    return null;
+  }
+}

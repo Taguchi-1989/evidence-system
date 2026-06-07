@@ -84,8 +84,29 @@ export const config = {
   },
 
   audit: {
-    llmProvider: env('AUDIT_LLM_PROVIDER', 'none') as 'none' | 'anthropic' | 'bedrock',
+    llmProvider: env('AUDIT_LLM_PROVIDER', 'none') as
+      | 'none'
+      | 'anthropic'
+      | 'azure-openai'
+      | 'bedrock',
     anthropicApiKey: optionalEnv('ANTHROPIC_API_KEY'),
+    azure: {
+      endpoint: optionalEnv('AZURE_OPENAI_ENDPOINT'), // 例: https://xxx.openai.azure.com
+      apiKey: optionalEnv('AZURE_OPENAI_API_KEY'),
+      deployment: optionalEnv('AZURE_OPENAI_DEPLOYMENT'), // デプロイ名
+      apiVersion: env('AZURE_OPENAI_API_VERSION', '2024-08-01-preview'),
+    },
+  },
+
+  /** 外部Agentソフト等からの API 連携 */
+  integration: {
+    /** サービス認証用 APIキー（カンマ区切り）。Bearer に一致すればサービスIDで認証 */
+    agentApiKeys: (optionalEnv('AGENT_API_KEYS') ?? '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean),
+    /** APIキー認証時に付与するロール（既定: 事務局=全社read+export） */
+    agentApiRole: env('AGENT_API_ROLE', 'office'),
   },
 } as const;
 

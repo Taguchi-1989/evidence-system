@@ -69,7 +69,17 @@ pnpm dev        # API:8787 + Web:5173
 - DynamoDB のキーをハンドラ内で直接組み立てる。
 - 監査Agentの結果を「最終評価」として扱う（あくまで参考判定 §15.2）。
 
+## 外部連携・拡張ポイント
+
+- **API（外部Agent/他システム）**: REST。`AGENT_API_KEYS` の APIキーを Bearer で M2M 認証
+  （[`middleware/auth.ts`](../apps/api/src/middleware/auth.ts)）。一覧/形は [docs/api.md](../docs/api.md)。
+- **証跡抽出**: CSV/テキスト/**XLSX**（exceljs）。追加は [`audit/extract.ts`](../apps/api/src/audit/extract.ts) と
+  `storage/objects.ts` の `getObjectBytes`。
+- **監査LLM**: `AUDIT_LLM_PROVIDER=none|anthropic|azure-openai`（[`audit/llm.ts`](../apps/api/src/audit/llm.ts)）。
+- **拡張プロンプト**: [.github/prompts](./prompts) に再利用プロンプト（項目追加/抽出器/LLM/エンドポイント/Excel取込）。
+
 ## もっと知るには
 
+- API リファレンス → [docs/api.md](../docs/api.md)
 - デプロイ/配信/夜間バッチの図解 → [docs/deployment.md](../docs/deployment.md)
 - AWS 構成のコスト比較 → [docs/aws-architecture-comparison.md](../docs/aws-architecture-comparison.md)

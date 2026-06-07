@@ -12,6 +12,7 @@ process.env.STORAGE_DRIVER = 'local';
 process.env.LOCAL_DATA_DIR = TMP;
 process.env.AUTH_PROVIDER = 'mock';
 process.env.NODE_ENV = 'test';
+process.env.AGENT_API_KEYS = 'e2e-agent-key'; // 外部Agent APIキー認証の検証用
 rmSync(TMP, { recursive: true, force: true }); // まっさらから開始
 
 const { seedAll } = await import('../src/seed.js');
@@ -170,6 +171,15 @@ async function main(): Promise<void> {
     .token as string;
   const forbidden = await req('GET', `/submissions/${sid}`, { token: otherToken });
   assert(forbidden.status === 403, '他人の提出は閲覧できない（RBAC）');
+
+  // 15) 外部Agent: APIキー（Bearer）で集計を取得できる
+  const agent = await req('GET', '/admin/stats?fiscalYear=2026', { token: 'e2e-agent-key' });
+  assert(
+    agent.ok && typeof agent.data.totalSubmissions === 'number',
+    '外部Agent APIキーで集計を取得できる',
+  );
+  const badKey = await req('GET', '/admin/stats?fiscalYear=2026', { token: 'wrong-key' });
+  assert(badKey.status === 401, '不正なAPIキーは 401 で拒否される');
 }
 
 main()

@@ -13,6 +13,7 @@ export const BUCKET_LABEL = config.s3.bucket;
 
 export const putObject = impl.putObject;
 export const getObjectText = impl.getObjectText;
+export const getObjectBytes = impl.getObjectBytes;
 export const objectExists = impl.objectExists;
 export const presignUpload = impl.presignUpload;
 export const presignDownload = impl.presignDownload;
