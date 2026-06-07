@@ -11,6 +11,9 @@ interface Props {
   xLabel: string;
   yLabel: string;
   quadrants?: { topLeft: string; topRight: string; bottomLeft: string; bottomRight: string };
+  /** クリックで選択（Plotly 風の詳細表示用） */
+  selectedId?: string | null;
+  onSelect?: (id: string) => void;
 }
 
 const W = 760;
@@ -23,7 +26,15 @@ const sx = (v: number) => PAD.l + (v / 100) * plotW;
 const sy = (v: number) => PAD.t + (1 - v / 100) * plotH; // 上が大きい
 const TICKS = [0, 25, 50, 75, 100];
 
-export function BubbleChart({ points, colorFor, xLabel, yLabel, quadrants }: Props) {
+export function BubbleChart({
+  points,
+  colorFor,
+  xLabel,
+  yLabel,
+  quadrants,
+  selectedId,
+  onSelect,
+}: Props) {
   const maxValue = Math.max(1, ...points.map((p) => p.value));
   const rMin = 7;
   const rMax = 34;
@@ -66,15 +77,32 @@ export function BubbleChart({ points, colorFor, xLabel, yLabel, quadrants }: Pro
         </g>
       )}
 
-      {/* バブル */}
+      {/* バブル（クリックで選択） */}
       {points.map((p) => {
         const c = colorFor(p.domainKey);
+        const r = radius(p.value);
+        const selected = p.id === selectedId;
         return (
-          <g key={p.id}>
-            <circle cx={sx(p.xValue)} cy={sy(p.yValue)} r={radius(p.value)} fill={c} fillOpacity={0.5} stroke={c} strokeWidth={1.5}>
+          <g
+            key={p.id}
+            onClick={() => onSelect?.(p.id)}
+            style={{ cursor: onSelect ? 'pointer' : 'default' }}
+          >
+            {selected && (
+              <circle cx={sx(p.xValue)} cy={sy(p.yValue)} r={r + 5} fill="none" stroke={c} strokeWidth={2} strokeDasharray="3 3" />
+            )}
+            <circle
+              cx={sx(p.xValue)}
+              cy={sy(p.yValue)}
+              r={r}
+              fill={c}
+              fillOpacity={selected ? 0.75 : 0.5}
+              stroke={c}
+              strokeWidth={selected ? 2.5 : 1.5}
+            >
               <title>{`${p.label}\n${p.domainLabel}\n必要経費=${p.xValue} / 展開性=${p.yValue} / 事業価値=${p.value}\n${p.detail}`}</title>
             </circle>
-            <text x={sx(p.xValue)} y={sy(p.yValue) - radius(p.value) - 3} fontSize="9" textAnchor="middle" fill="hsl(222 47% 31%)">
+            <text x={sx(p.xValue)} y={sy(p.yValue) - r - 3} fontSize="9" textAnchor="middle" fill="hsl(222 47% 31%)">
               {p.label.length > 14 ? p.label.slice(0, 13) + '…' : p.label}
             </text>
           </g>

@@ -11,7 +11,7 @@
  * GitHub Copilot に「bi-config の estimateCost を実コスト項目から計算するよう変更して」等と頼めます。
  */
 import type { Submission } from '@evidence/shared';
-import { IMPACT_LEVEL_LABELS } from '@evidence/shared';
+import { IMPACT_LEVEL_LABELS, CONTRIBUTION_LEVEL_LABELS } from '@evidence/shared';
 
 export interface BubblePoint {
   id: string;
@@ -85,6 +85,49 @@ export function toBubble(s: Submission, deptName: (id: string) => string): Bubbl
     domainLabel: deptName(domainOf(s)),
     detail: `${s.userName} ・ 展開性=${impact ? IMPACT_LEVEL_LABELS[impact] : '未設定'} ・ 事業価値=${businessValue(s)}`,
   };
+}
+
+// ── 詳細パネル用の派生属性（経費・一回性・効果・時期）──────────────
+// 専用データ項目が無い分は推定で自走（estimated:true）。実項目を追加したらここを差し替え。
+
+/** 効果規模（事業価値から区分） */
+export function effectTier(s: Submission): string {
+  const v = businessValue(s);
+  return v >= 16 ? '大' : v >= 8 ? '中' : '小';
+}
+/** 一回性：影響度が広いほど継続効果とみなす（推定） */
+export function recurrence(s: Submission): string {
+  return (s.impactLevelSelf ?? 1) >= 3 ? '継続的に効果' : '単発・局所的';
+}
+/** リードタイム目安（着手→完了, ヶ月。貢献度=労力の代理, 推定） */
+export function leadTimeMonths(s: Submission): number {
+  return s.contributionLevelSelf ?? 1;
+}
+/** 成果発現目安（完了→効果が出るまで, ヶ月。展開が広いほど時間がかかる想定, 推定） */
+export function timeToValueMonths(s: Submission): number {
+  return s.impactLevelSelf ?? 1;
+}
+
+export interface BiAttribute {
+  label: string;
+  value: string;
+  /** 推定値（実データ項目が未整備）か */
+  estimated?: boolean;
+}
+
+/** 詳細パネルに並べる属性一覧（順序もここで調整可）。 */
+export function deriveAttributes(s: Submission, deptName: (id: string) => string): BiAttribute[] {
+  return [
+    { label: '領域（部署）', value: deptName(s.departmentId) },
+    { label: '展開性（影響度）', value: s.impactLevelSelf ? IMPACT_LEVEL_LABELS[s.impactLevelSelf] : '未設定' },
+    { label: '貢献度', value: s.contributionLevelSelf ? CONTRIBUTION_LEVEL_LABELS[s.contributionLevelSelf] : '未設定' },
+    { label: '必要経費', value: `${estimateCost(s)} / 100`, estimated: true },
+    { label: '事業価値', value: String(businessValue(s)) },
+    { label: '効果規模', value: effectTier(s), estimated: true },
+    { label: '一回性', value: recurrence(s), estimated: true },
+    { label: 'リードタイム（いつ頃できる）', value: `約 ${leadTimeMonths(s)} ヶ月`, estimated: true },
+    { label: '成果発現（いつ頃成果が出る）', value: `約 ${timeToValueMonths(s)} ヶ月`, estimated: true },
+  ];
 }
 
 /** 4象限の意味づけ（「どんな領域に利用できるか」の読み取り補助）。 */
