@@ -23,6 +23,7 @@ import { endpoints } from '@/lib/endpoints';
 import { DEFAULT_FISCAL_YEAR } from '@/lib/constants';
 import { useAuth } from '@/auth/AuthContext';
 import { useToast } from '@/components/ui/toast';
+import { useUnsavedWarning } from '@/lib/useUnsavedWarning';
 import { messages } from '@/i18n/messages';
 import { PageHeader } from '@/components/PageHeader';
 import { EvidenceManager } from '@/components/EvidenceManager';
@@ -92,7 +93,7 @@ export function SubmissionFormPage() {
     enabled: isEdit,
   });
 
-  const { register, handleSubmit, reset, watch } = useForm<FormValues>({
+  const { register, handleSubmit, reset, watch, formState } = useForm<FormValues>({
     defaultValues: {
       departmentId: user?.departmentId ?? '',
       userName: user?.name ?? '',
@@ -130,6 +131,9 @@ export function SubmissionFormPage() {
 
   const presence = watch('evidencePresence');
 
+  // 未保存の変更があるままリロード/離脱しようとしたら警告
+  useUnsavedWarning(formState.isDirty && !saving);
+
   const toPayload = (v: FormValues): CreateSubmissionInput => ({
     fiscalYear: DEFAULT_FISCAL_YEAR,
     departmentId: v.departmentId,
@@ -162,6 +166,7 @@ export function SubmissionFormPage() {
     setSaving(true);
     try {
       const sid = await persist(v);
+      reset(v); // 保存済み内容を基準にし、未保存(dirty)状態を解除
       notify(messages.toast.saved);
       void qc.invalidateQueries({ queryKey: ['submissions'] });
       if (!isEdit) navigate(`/submissions/${sid}/edit`, { replace: true });
@@ -289,7 +294,12 @@ export function SubmissionFormPage() {
             </div>
             <div className="sm:col-span-2">
               <Field label={req(messages.fields.achievement)}>
-                <Textarea rows={4} aria-label={messages.fields.achievement} {...register('achievementText')} />
+                <Textarea
+                  rows={4}
+                  aria-label={messages.fields.achievement}
+                  aria-required={strict}
+                  {...register('achievementText')}
+                />
               </Field>
             </div>
           </CardContent>
@@ -301,7 +311,11 @@ export function SubmissionFormPage() {
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
             <Field label={req(messages.fields.impactLevel)}>
-              <Select aria-label={messages.fields.impactLevel} {...register('impactLevelSelf')}>
+              <Select
+                aria-label={messages.fields.impactLevel}
+                aria-required={strict}
+                {...register('impactLevelSelf')}
+              >
                 <option value="">未選択</option>
                 {IMPACT_LEVELS.map((l) => (
                   <option key={l} value={l}>
@@ -311,7 +325,11 @@ export function SubmissionFormPage() {
               </Select>
             </Field>
             <Field label={req(messages.fields.contributionLevel)}>
-              <Select aria-label={messages.fields.contributionLevel} {...register('contributionLevelSelf')}>
+              <Select
+                aria-label={messages.fields.contributionLevel}
+                aria-required={strict}
+                {...register('contributionLevelSelf')}
+              >
                 <option value="">未選択</option>
                 {CONTRIBUTION_LEVELS.map((l) => (
                   <option key={l} value={l}>
