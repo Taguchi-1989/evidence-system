@@ -12,6 +12,7 @@ export const messages = {
     mySubmissions: '自分の提出',
     team: '部門一覧',
     admin: '管理ダッシュボード',
+    bi: 'BI ダッシュボード',
     pending: '未提出・要確認',
     audit: '監査結果',
     exports: 'エクスポート',
