@@ -30,6 +30,8 @@ import type { Construct } from 'constructs';
 export interface EvidenceStackProps extends StackProps {
   fiscalYearTableName: string;
   bucketName?: string;
+  /** S3 CORS の許可オリジン。本番では CloudFront ドメイン等に必ず絞ること。 */
+  allowedOrigins?: string[];
 }
 
 const API_ENTRY = path.join(__dirname, '../../../apps/api/src/lambda.ts');
@@ -70,8 +72,8 @@ export class EvidenceStack extends Stack {
       removalPolicy: RemovalPolicy.RETAIN,
       cors: [
         {
-          // 本番では許可オリジンを CloudFront ドメインに絞る
-          allowedOrigins: ['*'],
+          // 本番では許可オリジンを CloudFront ドメインに絞る（props.allowedOrigins で指定）
+          allowedOrigins: props.allowedOrigins ?? ['*'],
           allowedMethods: [s3.HttpMethods.PUT, s3.HttpMethods.GET, s3.HttpMethods.HEAD],
           allowedHeaders: ['*'],
           exposedHeaders: ['ETag'],

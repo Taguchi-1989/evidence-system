@@ -4,5 +4,6 @@ import type { AuthUser } from '@evidence/shared';
 export interface AppEnv {
   Variables: {
     user: AuthUser;
+    requestId: string;
   };
 }

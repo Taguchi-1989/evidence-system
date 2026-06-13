@@ -61,14 +61,42 @@ ${evidenceTexts.length ? evidenceTexts.join('\n---\n').slice(0, 8000) : '(抽出
 {"relatedScore":0-100,"impactSupportScore":0-100,"contributionSupportScore":0-100,"confidence":0-100,"reason":"日本語の短い理由","extractedSummary":"根拠となる抜粋の要約"}`;
 }
 
-function parseScore(text: string): LlmScore | null {
+function clamp0to100(v: unknown): number | null {
+  const n = typeof v === 'string' ? Number(v) : v;
+  if (typeof n !== 'number' || !Number.isFinite(n)) return null;
+  return Math.min(100, Math.max(0, Math.round(n)));
+}
+
+export function parseScore(text: string): LlmScore | null {
   try {
     const json = text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1);
-    return JSON.parse(json) as LlmScore;
+    const raw = JSON.parse(json) as Record<string, unknown>;
+    const relatedScore = clamp0to100(raw.relatedScore);
+    const impactSupportScore = clamp0to100(raw.impactSupportScore);
+    const contributionSupportScore = clamp0to100(raw.contributionSupportScore);
+    const confidence = clamp0to100(raw.confidence);
+    if (
+      relatedScore === null ||
+      impactSupportScore === null ||
+      contributionSupportScore === null ||
+      confidence === null
+    )
+      return null;
+    return {
+      relatedScore,
+      impactSupportScore,
+      contributionSupportScore,
+      confidence,
+      reason: typeof raw.reason === 'string' ? raw.reason : '',
+      extractedSummary: typeof raw.extractedSummary === 'string' ? raw.extractedSummary : '',
+    };
   } catch {
     return null;
   }
 }
+
+/** LLM API 呼び出しの上限時間。超過時は null を返し構造チェックのみで続行する。 */
+const LLM_TIMEOUT_MS = 30_000;
 
 async function callAnthropic(prompt: string): Promise<string | null> {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -78,6 +106,7 @@ async function callAnthropic(prompt: string): Promise<string | null> {
       'x-api-key': config.audit.anthropicApiKey!,
       'anthropic-version': '2023-06-01',
     },
+    signal: AbortSignal.timeout(LLM_TIMEOUT_MS),
     body: JSON.stringify({
       model: ANTHROPIC_MODEL,
       max_tokens: 512,
@@ -95,6 +124,7 @@ async function callAzureOpenAI(prompt: string): Promise<string | null> {
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'api-key': apiKey! },
+    signal: AbortSignal.timeout(LLM_TIMEOUT_MS),
     body: JSON.stringify({
       messages: [{ role: 'user', content: prompt }],
       max_tokens: 512,
@@ -113,13 +143,20 @@ export async function scoreWithLLM(
 ): Promise<LlmScore | null> {
   if (!llmEnabled()) return null;
   const prompt = buildPrompt(submission, evidenceTexts);
-  try {
-    const text =
-      config.audit.llmProvider === 'azure-openai'
-        ? await callAzureOpenAI(prompt)
-        : await callAnthropic(prompt);
-    return text ? parseScore(text) : null;
-  } catch {
-    return null;
+  // 一時的な失敗（タイムアウト・5xx 等）に備えて 1 回だけ再試行する
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const text =
+        config.audit.llmProvider === 'azure-openai'
+          ? await callAzureOpenAI(prompt)
+          : await callAnthropic(prompt);
+      if (text) {
+        const score = parseScore(text);
+        if (score) return score;
+      }
+    } catch {
+      // fall through to retry
+    }
   }
+  return null;
 }

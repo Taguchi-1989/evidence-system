@@ -20,6 +20,13 @@ export function createApp() {
   const app = new Hono<AppEnv>();
 
   app.use('*', cors({ origin: config.api.corsOrigin, credentials: true }));
+  // リクエストID：障害時にログとレスポンスを突き合わせるための相関ID
+  app.use('*', async (c, next) => {
+    const requestId = c.req.header('x-request-id') ?? crypto.randomUUID();
+    c.set('requestId', requestId);
+    c.header('x-request-id', requestId);
+    await next();
+  });
   app.onError(onError);
 
   app.get('/health', (c) => c.json({ ok: true, service: 'evidence-api' }));
