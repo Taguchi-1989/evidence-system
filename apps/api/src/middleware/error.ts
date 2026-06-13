@@ -12,9 +12,15 @@ export const onError: ErrorHandler = (err, c) => {
     const he = fromZod(err);
     return c.json(errorBody(he), he.status as 400);
   }
-  console.error('[unhandled]', err);
+  const requestId = c.get('requestId' as never) ?? '';
+  console.error(`[unhandled] requestId=${requestId}`, err);
   return c.json(
-    { error: { code: ERROR_CODES.INTERNAL, message: 'サーバ内部エラーが発生しました' } },
+    {
+      error: {
+        code: ERROR_CODES.INTERNAL,
+        message: `サーバ内部エラーが発生しました（requestId: ${requestId}）`,
+      },
+    },
     500,
   );
 };

@@ -15,6 +15,15 @@ interface Bucket {
 }
 const buckets = new Map<string, Bucket>();
 
+/** 期限切れバケットの掃除（キー数が増えたときだけ実行し、無制限な成長を防ぐ） */
+const SWEEP_THRESHOLD = 1000;
+function sweep(now: number): void {
+  if (buckets.size < SWEEP_THRESHOLD) return;
+  for (const [k, v] of buckets) {
+    if (v.resetAt <= now) buckets.delete(k);
+  }
+}
+
 export function rateLimit(opts: {
   max: number;
   windowMs: number;
@@ -23,6 +32,7 @@ export function rateLimit(opts: {
   return async (c, next) => {
     const key = opts.keyFn(c);
     const now = Date.now();
+    sweep(now);
     const b = buckets.get(key);
     if (!b || b.resetAt <= now) {
       buckets.set(key, { count: 1, resetAt: now + opts.windowMs });
